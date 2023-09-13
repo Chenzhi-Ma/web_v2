@@ -4,7 +4,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import pickle
-from functions import column_cost, floor_system_cost,fire_service_cost,calculate_fireprotection_cost
+from functions import column_cost_calculation, floor_system_cost,fire_service_cost,calculate_fireprotection_cost
 import matplotlib.pyplot as plt
 st.set_page_config(page_title="Construction cost estimation")
 

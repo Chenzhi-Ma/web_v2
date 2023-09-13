@@ -4,7 +4,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import pickle
-from functions import column_cost, floor_system_cost,fire_service_cost,calculate_fireprotection_cost
+from functions import column_cost_calculation, floor_system_cost,fire_service_cost,calculate_fireprotection_cost
 import matplotlib.pyplot as plt
 st.set_page_config(page_title="Construction cost estimation")
 
@@ -42,7 +42,7 @@ totalcost_ori = totalcost_mat['totalcost_num']
     # define new vlue in the database
 
 def Modify_database():
-    from functions import column_cost, floor_system_cost,fire_service_cost
+    from functions import column_cost_calculation, floor_system_cost,fire_service_cost
     import matplotlib.pyplot as plt
     st.header("Economic impact of performance-based structural fire design")
 
@@ -76,7 +76,6 @@ def Modify_database():
         bayload_inp = bay_total_load_default[Building_type - 1]  # kips
         baysize1_inp = 20  # ft
         baysize2_inp = 25  # ft
-
 
         # Set up the inputs for Material Properties
         Building_para_modi = st.checkbox('Modify default building paramter')
@@ -112,13 +111,21 @@ def Modify_database():
 
         fire_design_para_modi = st.checkbox('Modify default fire design paramter')
 
+        column_fire_rating_inp = int(building_information_ori[building_index - 1][12])
+        Beam_fire_rating_inp = int(building_information_ori[building_index - 1][11])
+        fire_protection_material_column_inp = 1
+
+        fire_protection_material_beam_inp = 1
+        fire_protection_percentage_column_inp = 1
+        fire_protection_percentage_beam_inp = 1
+
         if fire_design_para_modi:
 
             col1,col2 = st.columns(2)
             with col2:
-                column_fire_rating_inp = st.number_input("Column fire rating (hr)",min_value=0,max_value=4,value=2, step=1)
+                column_fire_rating_inp = st.number_input("Column fire rating (hr)",min_value=0,max_value=4,value=column_fire_rating_inp, step=1)
             with col1:
-                Beam_fire_rating_inp = st.number_input("Beam fire rating (hr)",min_value=0,max_value=4,value=2, step=1)
+                Beam_fire_rating_inp = st.number_input("Beam fire rating (hr)",min_value=0,max_value=4,value=Beam_fire_rating_inp, step=1)
             col1, col2 = st.columns(2)
             with col2:
                 fire_protection_material_column_inp = st.number_input("Input column fire protection material",min_value=1,value=1, step=1)
@@ -129,15 +136,6 @@ def Modify_database():
                 fire_protection_percentage_column_inp = st.number_input("Input column fire protection percentage",value=1.00,min_value=0.00, max_value=1.00,step=0.01)
             with col1:
                 fire_protection_percentage_beam_inp = st.number_input("Input beam fire protection percentage",value=1.00,min_value=0.00, max_value=1.00,step=0.01)
-
-        else:
-            column_fire_rating_inp = int(building_information_ori[building_index - 1][12])
-            Beam_fire_rating_inp = int(building_information_ori[building_index - 1][11])
-            fire_protection_material_column_inp = 1
-
-            fire_protection_material_beam_inp = 1
-            fire_protection_percentage_column_inp=1
-            fire_protection_percentage_beam_inp=1
 
         fire_cost_para_modi = st.checkbox('Modify default fire protection cost value')
 
@@ -155,10 +153,19 @@ def Modify_database():
         # get the numerical value for given fire protection materials
         column_fire_cost_tabular = np.asarray(data_frame.iloc[row_indices_column, 0:7], float)
 
+
         # get the indices for different fire protection materials for beams
         row_indices_beam = [i - 8 + fire_protection_material_beam_inp * 10 for i in range(0, 8)]
 
         beam_fire_cost_tabular = np.asarray(data_frame.iloc[row_indices_beam, 9:14], float)
+
+        beam_fire_labor_tabular = np.asarray(data_frame.iloc[0:5, 26:33])
+        # sf material labor hour
+        unit_labor_beam=float(beam_fire_labor_tabular[2,6])
+        unit_material_fireprotection = float(beam_fire_labor_tabular[2, 5])
+        unit_labor_fluted_deck=beam_fire_labor_tabular[3,6]
+        unit_material_fluted_deck = beam_fire_labor_tabular[3, 5]
+        #
 
         # beam fire cost at different fire rating with given building index
         beam_fire_cost = beam_fire_cost_tabular[Building_type - 1][2:5]
@@ -166,19 +173,29 @@ def Modify_database():
         floor_default_composite = [20.65, 20.65, 19.99, 19.99, 19.99, 19.99, 19.99, 19.99]
         fireprotectionbeam_default = [0.86, 0.86, 0.79, 0.79, 0.79, 0.79, 0.79, 0.79]
 
+        # fireprotectionbeam_default_material = [0.523,0.523,0.483,0.483,0.483,0.483,0.483,0.483]
+
+
         floor_composite = floor_default_composite[Building_type - 1]
         fireprotectionbeam_ori = fireprotectionbeam_default[Building_type - 1]
 
 
-        column_cost, column_protection_cost, floor_load_max = column_cost(total_floor_area_inp, total_story, baysize1_inp, baysize2_inp,
-                                                          bayload_inp,story_height_inp, column_tabular, column_fire_cost_tabular,fire_protection_percentage_column_inp)
+        column_cost, column_protection_cost, floor_load_max,column_protection_labor = column_cost_calculation(total_floor_area_inp, total_story, baysize1_inp, baysize2_inp,
+                                                          bayload_inp,story_height_inp, column_tabular, column_fire_cost_tabular,fire_protection_percentage_column_inp,
+                                                                                      unit_material_fireprotection,unit_labor_beam)
 
-        floor_cost, floor_protection_cost = floor_system_cost(total_floor_area_inp, floor_composite, beam_fire_cost,
-                                                              fireprotectionbeam_ori,fire_protection_percentage_beam_inp)
+        if fire_protection_material_column_inp!=1:
+            column_protection_labor=column_protection_labor*0
+
+        floor_cost, floor_protection_cost,floor_protection_labor = floor_system_cost(total_floor_area_inp, floor_composite, beam_fire_cost,
+                                                              fireprotectionbeam_ori,fire_protection_percentage_beam_inp,
+                                                                               unit_material_fireprotection,unit_labor_beam)
+        if fire_protection_material_beam_inp!=1:
+            floor_protection_labor=floor_protection_labor*0
 
         total_cost = totalcost_ori[building_index - 1][2] + floor_cost + column_cost + column_protection_cost[
             column_fire_rating_inp - 1] + floor_protection_cost[Beam_fire_rating_inp - 1]
-        total_cost_sqft = total_cost / total_floor_area_inp
+        # total_cost_sqft = total_cost / total_floor_area_inp
 
         if floor_load_max>1000:
             st.write ("Warning: ")
@@ -195,12 +212,74 @@ def Modify_database():
             partition_cost, Sprinkler_cost, Fire_pump_cost, Alarm_cost, Ceiling_cost = [0,0,0,0,0]
         st.write("---")
 
+        alter_design = st.checkbox('Do you want to specify fire design parameters for alternative design?')
+
+        if alter_design:
+
+            col1,col2 = st.columns(2)
+            with col2:
+                column_fire_rating_inp_alt = st.number_input("Column fire rating alt. (hr)",min_value=0,max_value=4,value=column_fire_rating_inp, step=1)
+            with col1:
+                Beam_fire_rating_inp_alt = st.number_input("Beam fire rating alt. (hr)",min_value=0,max_value=4,value=Beam_fire_rating_inp, step=1)
+            col1, col2 = st.columns(2)
+            with col2:
+                fire_protection_material_column_inp_alt = st.number_input("Input column fire protection material alt.",min_value=1,value=fire_protection_material_column_inp, step=1)
+            with col1:
+                fire_protection_material_beam_inp_alt = st.number_input("Input beam fire protection material alt.",min_value=1,value=fire_protection_material_beam_inp, step=1)
+            col1, col2 = st.columns(2)
+            with col2:
+                fire_protection_percentage_column_inp_alt = st.number_input("Input column fire protection percentage alt.",value=float(fire_protection_percentage_column_inp),min_value=0.00, max_value=1.00,step=0.01)
+            with col1:
+                fire_protection_percentage_beam_inp_alt = st.number_input("Input beam fire protection percentage alt.",value=float(fire_protection_percentage_beam_inp),min_value=0.00, max_value=1.00,step=0.01)
+
+            row_indices_column = [i + 12 + fire_protection_material_column_inp_alt * 6 for i in range(0, 4)]
+            # get the numerical value for given fire protection materials
+            column_fire_cost_tabular_alt = np.asarray(data_frame.iloc[row_indices_column, 0:7], float)
+
+            # get the indices for different fire protection materials for beams
+            row_indices_beam = [i - 8 + fire_protection_material_beam_inp_alt * 10 for i in range(0, 8)]
+
+            beam_fire_cost_tabular_alt = np.asarray(data_frame.iloc[row_indices_beam, 9:14], float)
+            beam_fire_cost_alt = beam_fire_cost_tabular_alt[Building_type - 1][2:5]
+
+            column_cost_alt, column_protection_cost_alt, floor_load_max_alt, column_protection_labor_alt= column_cost_calculation(total_floor_area_inp, total_story, baysize1_inp, baysize2_inp,
+                                                              bayload_inp,story_height_inp, column_tabular, column_fire_cost_tabular_alt,fire_protection_percentage_column_inp_alt
+                                                                                                       ,unit_material_fireprotection,unit_labor_beam)
+            if fire_protection_material_column_inp_alt != 1:
+                column_protection_labor_alt = column_protection_labor_alt * 0
+
+            floor_cost_alt, floor_protection_cost_alt,floor_protection_labor_alt = floor_system_cost(total_floor_area_inp, floor_composite, beam_fire_cost_alt,
+                                                                  fireprotectionbeam_ori,fire_protection_percentage_beam_inp_alt
+                                                                          ,unit_material_fireprotection,unit_labor_beam)
+            if fire_protection_material_beam_inp_alt != 1:
+                floor_protection_labor_alt = floor_protection_labor_alt * 0
+
+            total_cost_alt = totalcost_ori[building_index - 1][2] + floor_cost + column_cost + column_protection_cost[
+                column_fire_rating_inp_alt - 1] + floor_protection_cost[Beam_fire_rating_inp_alt - 1]
+
+
     with st.container():
         st.subheader('Results')
         st.write("---")
 
+        data = {
+            'Total area': [int(total_floor_area_inp)],
+            'Story height': [int(story_height_inp)],
+            'Bay load': [bayload_inp],
+            'Bay size1': [baysize1_inp],
+            'Bay size2': [baysize2_inp],
+        }
+        building_basic_information = pd.DataFrame(data)
+        st.session_state.building_basic_information = building_basic_information  # Attribute API
+
         #define the size of the figure
-        f1 = plt.figure(figsize=(8, 8), dpi=200)
+        f1 = plt.figure(figsize=(6, 6), dpi=200)
+        plt.subplots_adjust(left=0.1, right=0.9, top=0.9, bottom=0.1, wspace=0.4, hspace=0.4)
+
+        f2 = plt.figure(figsize=(6, 6), dpi=200)
+        plt.subplots_adjust(left=0.1, right=0.9, top=0.9, bottom=0.1, wspace=0.4, hspace=0.4)
+
+        f3 = plt.figure(figsize=(6, 6), dpi=200)
         plt.subplots_adjust(left=0.1, right=0.9, top=0.9, bottom=0.1, wspace=0.4, hspace=0.4)
 
         # two subplots are adopted
@@ -235,22 +314,91 @@ def Modify_database():
         #              Fire_pump_cost, Alarm_cost, Ceiling_cost]/total_cost), 6))
 
         # show the table that lists the updated cost data
+        column_fire_labor_given_rate = column_protection_labor[column_fire_rating_inp - 1]
+        floor_protection_labor_given_rate = floor_protection_labor[Beam_fire_rating_inp - 1]
         data = {
-            '': ['Cost ($)',"Cost multiplier"],
-            'Floor': [int(floor_protection_cost_given_rate),floor_protection_cost_given_rate/total_cost],
-            'Column': [int(column_fire_cost_given_rate),column_fire_cost_given_rate/total_cost],
-            'Partition': [int(partition_cost),partition_cost/total_cost],
-            'Sprinkler': [int(Sprinkler_cost),Sprinkler_cost/total_cost],
-            'Fire pump': [int(Fire_pump_cost),Fire_pump_cost/total_cost],
-            'Alarm': [int(Alarm_cost),Alarm_cost/total_cost],
-            'Ceiling': [int(Ceiling_cost),Ceiling_cost/total_cost],
+            '': ['Cost ($)',"Cost multiplier","Labor hour"],
+            'Floor': [int(floor_protection_cost_given_rate),floor_protection_cost_given_rate/total_cost,int(floor_protection_labor_given_rate)],
+            'Column': [int(column_fire_cost_given_rate),column_fire_cost_given_rate/total_cost,int(column_fire_labor_given_rate)],
+            'Partition': [int(partition_cost),partition_cost/total_cost,0],
+            'Sprinkler': [int(Sprinkler_cost),Sprinkler_cost/total_cost,0],
+            'Fire pump': [int(Fire_pump_cost),Fire_pump_cost/total_cost,0],
+            'Alarm': [int(Alarm_cost),Alarm_cost/total_cost,0],
+            'Ceiling': [int(Ceiling_cost),Ceiling_cost/total_cost,0],
         }
-        construction_cost_df_updated = pd.DataFrame(data, index=[0,1])
-        st.markdown('**Updated cost data with user-defined cost value**')
-        st.dataframe(construction_cost_df_updated,use_container_width=True,hide_index=True)
-
+        construction_cost_df_updated = pd.DataFrame(data)
 
         ax3 = f1.add_subplot(2, 1, 2)
+        ax3.grid(True)
+
+        p1 = ax3.bar([1, 2],
+                     [floor_protection_labor_given_rate, column_fire_labor_given_rate], width=0.4, edgecolor=[1, 0, 0])
+        ax3.set_xticks([1, 2], ('Beams', 'Columns'))
+        ax3.set_ylabel('Labor hour (hr)')
+        ax3.set_title('Labor hour needed for crew G2')
+
+
+
+
+
+
+        if alter_design:
+            column_fire_cost_given_rate = column_protection_cost_alt[column_fire_rating_inp_alt - 1]
+            floor_protection_cost_given_rate = floor_protection_cost_alt[Beam_fire_rating_inp_alt - 1]
+            column_fire_labor_given_rate = column_protection_labor_alt[column_fire_rating_inp_alt - 1]
+            floor_protection_labor_given_rate = floor_protection_labor_alt[Beam_fire_rating_inp_alt - 1]
+
+            data = {
+                '': ['Cost ($)',"Cost multiplier","Labor hour"],
+                'Floor': [int(floor_protection_cost_given_rate),floor_protection_cost_given_rate/total_cost,int(floor_protection_labor_given_rate)],
+                'Column': [int(column_fire_cost_given_rate),column_fire_cost_given_rate/total_cost,int(column_fire_labor_given_rate)],
+                'Partition': [int(partition_cost),partition_cost/total_cost,0],
+                'Sprinkler': [int(Sprinkler_cost),Sprinkler_cost/total_cost,0],
+                'Fire pump': [int(Fire_pump_cost),Fire_pump_cost/total_cost,0],
+                'Alarm': [int(Alarm_cost),Alarm_cost/total_cost,0],
+                'Ceiling': [int(Ceiling_cost),Ceiling_cost/total_cost,0],
+            }
+            construction_cost_df_updated_alt = pd.DataFrame(data)
+
+
+            ax2 = f2.add_subplot(2, 1, 1)
+            ax2.grid(True)
+
+            p2 = ax2.bar([1, 2, 3, 4, 5, 6, 7],
+                         [floor_protection_cost_given_rate, column_fire_cost_given_rate, partition_cost, Sprinkler_cost,
+                          Fire_pump_cost, Alarm_cost, Ceiling_cost], width=0.4, edgecolor=[1, 0, 0])
+            ax2.set_xticks([1, 2, 3, 4, 5, 6, 7],
+                           ('Beams', 'Columns', 'Partition', 'Sprinkler', 'Fire pump', 'Alarm', 'Ceiling'))
+            ax2.set_ylabel('Cost ($)')
+            ax2.set_title('Fire service cost (Alternative design)')
+            p2[0].set_color([0, 0.5, 1])
+            p2[0].set_edgecolor([0, 0, 1])
+            p2[1].set_color([0, 0.5, 1])
+            p2[1].set_edgecolor([0, 0, 1])
+
+            # make the y axis can be shown on right side
+            ax3 = ax2.twinx()
+            p3 = ax3.bar([1, 2, 3, 4, 5, 6, 7],
+                         [floor_protection_cost_given_rate, column_fire_cost_given_rate, partition_cost, Sprinkler_cost,
+                          Fire_pump_cost, Alarm_cost, Ceiling_cost] / total_cost, width=0.2, edgecolor=[1, 0, 0])
+            ax3.set_ylabel('Cost multiplier', color='red')
+            ax3.tick_params(axis='y', labelcolor='red')
+            p3[0].set_color([0, 0.5, 1])
+            p3[0].set_edgecolor([0, 0, 1])
+            p3[1].set_color([0, 0.5, 1])
+            p3[1].set_edgecolor([0, 0, 1])
+
+            ax3 = f2.add_subplot(2, 1, 2)
+            ax3.grid(True)
+
+            p1 = ax3.bar([1, 2],
+                         [floor_protection_labor_given_rate, column_fire_labor_given_rate], width=0.4,
+                         edgecolor=[1, 0, 0])
+            ax3.set_xticks([1, 2], ('Beams', 'Columns'))
+            ax3.set_ylabel('Labor hour (hr)')
+            ax3.set_title('Labor hour needed for crew G2')
+
+        ax3 = f3.add_subplot(2, 1, 1)
 
         p3 = ax3.bar([1, 2, 3, 4, 5, 6, 7],
                      building_information_ori[building_index-1, [19, 20, 21, 22, 23, 24, 25]],width=0.4,edgecolor=[1,0,0])
@@ -283,23 +431,38 @@ def Modify_database():
         # show the table that lists the original cost data
         data = {
             '': ['Cost ($)',"Cost multiplier"],
-            'Floor': [int(building_information_ori[building_index-1, [19]]),float(building_information_ori[building_index-1, [19]])/total_cost],
-            'Column': [int(building_information_ori[building_index-1, [20]]),float(building_information_ori[building_index-1, [20]])/total_cost],
-            'Partition': [int(building_information_ori[building_index-1, [21]]),float(building_information_ori[building_index-1, [21]])/total_cost],
-            'Sprinkler': [int(building_information_ori[building_index-1, [22]]),float(building_information_ori[building_index-1, [22]])/total_cost],
-            'Fire pump': [int(building_information_ori[building_index-1, [23]]),float(building_information_ori[building_index-1, [23]])/total_cost],
-            'Alarm': [int(building_information_ori[building_index-1, [24]]),float(building_information_ori[building_index-1, [24]])/total_cost],
-            'Ceiling': [int(building_information_ori[building_index-1, [25]]),float(building_information_ori[building_index-1, [25]])/total_cost],
+            'Floor': [int(building_information_ori[building_index-1, 19]),float(building_information_ori[building_index-1,19])/total_cost],
+            'Column': [int(building_information_ori[building_index-1, 20]),float(building_information_ori[building_index-1, 20])/total_cost],
+            'Partition': [int(building_information_ori[building_index-1, 21]),float(building_information_ori[building_index-1, 21])/total_cost],
+            'Sprinkler': [int(building_information_ori[building_index-1, 22]),float(building_information_ori[building_index-1, 22])/total_cost],
+            'Fire pump': [int(building_information_ori[building_index-1, 23]),float(building_information_ori[building_index-1, 23])/total_cost],
+            'Alarm': [int(building_information_ori[building_index-1, 24]),float(building_information_ori[building_index-1, 24])/total_cost],
+            'Ceiling': [int(building_information_ori[building_index-1, 25]),float(building_information_ori[building_index-1, 25])/total_cost],
         }
         construction_cost_df_original = pd.DataFrame(data, index=[0,1])
+
+
+        col1, col2 = st.columns(2)
+        with col1:
+
+            st.markdown('**Updated cost data with user-defined cost value**')
+            st.dataframe(construction_cost_df_updated, use_container_width=True, hide_index=True)
+            st.session_state.construction_cost_df = construction_cost_df_updated  # Attribute API
+            st.pyplot(f1)
+        if alter_design:
+            with col2:
+                st.markdown('**Alternative design**')
+                st.dataframe(construction_cost_df_updated_alt,use_container_width=True,hide_index=True)
+                st.session_state.construction_cost_df_alt = construction_cost_df_updated_alt  # Attribute API
+                st.pyplot(f2)
+
         st.markdown('**Original cost data**')
-
         st.dataframe(construction_cost_df_original,use_container_width=True,hide_index=True)
-
-        st.pyplot(f1)
-
         st.session_state.construction_cost_df_original = construction_cost_df_original  # Attribute API
-        st.session_state.construction_cost_df = construction_cost_df_updated  # Attribute API
+
+        st.pyplot(f3)
+
+
 
         Download = st.checkbox('Do you want to download the detailed member cost')
         if Download:
@@ -326,7 +489,7 @@ def User_defined_building():
             Cost_method = st.selectbox('What unit cost value you like to use',('RSMeans default value','User defined equation'))
 
             if Cost_method == 'User defined equation':
-                col1, col2= st.columns(2)
+                col1, col2 = st.columns(2)
                 with col1:
                     para_fireprotection[4, 0] = st.number_input("Unit fire protection cost for metal deck, material 1, per sf.")
                 with col2:
@@ -547,6 +710,10 @@ def User_defined_building():
                 elif member_shape_index_inp[i] == 4:
                     total_fire_protection_cost_member4 += member_price[i]
 
+
+        alter_design = st.checkbox('Do you want to specify fire design parameters for alternative design?')
+
+
     with st.container():
         st.subheader('Results')
         st.write("---")
@@ -684,3 +851,8 @@ page_names_to_funcs = {
 
 demo_name = st.sidebar.selectbox("Choose a sub tool", page_names_to_funcs.keys())
 page_names_to_funcs[demo_name]()
+
+
+
+
+

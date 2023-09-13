@@ -4,7 +4,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import pickle
-from functions import column_cost, floor_system_cost,fire_service_cost,calculate_fireprotection_cost
+from functions import column_cost_calculation, floor_system_cost,fire_service_cost,calculate_fireprotection_cost
 import matplotlib.pyplot as plt
 st.set_page_config(page_title="ASTM index calculation")
 
@@ -54,17 +54,34 @@ with st.sidebar:
 
     if astm_index_method == 'Based on previous data':
         construction_cost_df=st.session_state.construction_cost_df
-        CI=construction_cost_df['Floor'][0]+construction_cost_df['Column'][0]
-        direction_damage_loss=st.session_state.direction_damage_loss
-        DD=direction_damage_loss['Study year loss']
+        CI_ref=construction_cost_df['Floor'][0]+construction_cost_df['Column'][0]
+        direct_damage_loss=st.session_state.direct_damage_loss
+        DD_ref=direct_damage_loss['Study year loss']
         indirect_damage_loss_df=st.session_state.indirect_damage_loss_df
-        ID=indirect_damage_loss_df['indirect_damage_loss']
+        ID_ref=indirect_damage_loss_df['indirect damage loss']
         Maintenance_cost_df=st.session_state.Maintenance_cost_df   # Attribute API
-        CM=Maintenance_cost_df['Maintenance_cost']
+        CM_ref=Maintenance_cost_df['Maintenance cost']
         Cobenefits_value_df=st.session_state.Cobenefits_value_df    # Attribute API
-        CB=Cobenefits_value_df['Cobenefits_value']
-        pvlcc = CI + DD + ID+CM - CB
+        CB_ref=Cobenefits_value_df['Cobenefit']
 
+        construction_cost_df_alt=st.session_state.construction_cost_df_alt
+        CI_alt=construction_cost_df_alt['Floor'][0]+construction_cost_df_alt['Column'][0]
+        direct_damage_loss_alt=st.session_state.direct_damage_loss_alt
+        DD_alt=direct_damage_loss_alt['Study year loss']
+        indirect_damage_loss_df_alt=st.session_state.indirect_damage_loss_df_alt
+        ID_alt=indirect_damage_loss_df_alt['indirect damage loss']
+        maintenance_cost_total_alt=st.session_state.maintenance_cost_total_alt  # Attribute API
+        CM_alt=maintenance_cost_total_alt['Maintenance cost']
+        Cobenefits_value_df_alt=st.session_state.Cobenefits_value_df_alt    # Attribute API
+        CB_alt=Cobenefits_value_df_alt['Cobenefit']
+
+
+
+        pvlcc_ref = CI_ref + DD_ref + ID_ref+CM_ref - CB_ref
+        pvlcc_alt = CI_alt + DD_alt + ID_alt + CM_alt - CB_alt
+        net_b = DD_ref + ID_ref-CB_ref - DD_alt - ID_alt + CB_alt
+        net_c = -CI_ref - CM_ref + CI_alt + CM_alt
+        pnv = net_b - net_c
 
 
 
@@ -100,14 +117,30 @@ with st.sidebar:
 with st.container():
     st.subheader('Results')
     st.write("---")
-    st.write("BCR,LCC,PNV of provided design values")
+    #st.write("BCR,LCC,PNV of provided design values")
 
 
-    st.session_state.PVLCC = pvlcc  # Attribute API
+    #st.session_state.PVLCC = pvlcc  # Attribute API
     st.markdown("### present value life cycle cost of given fire design")
     data = {
-        "PVLCC": [pvlcc],
+        '': ['Reference design', "Alternative design"],
+        "Constuction cost": [int(CI_ref),int(CI_alt)],
+        "Direct damage": [int(DD_ref),int(DD_alt)],
+        "Indirect damage": [int(ID_ref),int(ID_alt)],
+        "Maintenance": [int(CM_ref),int(CM_alt)],
+        "Co-benefit": [int(CB_ref),int(CB_alt)],
     }
-    PVLCC_df = pd.DataFrame(data)
-    st.dataframe(pvlcc, use_container_width=True, hide_index=True)
+    Cost_summary = pd.DataFrame(data)
+    st.dataframe(Cost_summary, use_container_width=True, hide_index=True)
+    st.session_state.Cost_summary = Cost_summary
+    data = {
+        "PVLCC_ref": [int(pvlcc_ref)],
+        "PVLCC_alt": [int(pvlcc_alt)],
+        "Net benetif": [int(net_b)],
+        "Net cost": [int(net_c)],
+        "Present net value": [int(pnv)],
+    }
+    astm_index = pd.DataFrame(data)
+    st.dataframe(data, use_container_width=True, hide_index=True)
+    st.session_state.astm_index = astm_index
 
