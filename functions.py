@@ -34,8 +34,9 @@ def find_closest_larger_index(array, target):
 
 
 # calculate column cost
-def column_cost( total_A, total_story, baysize1, baysize2, bay_total_load, story_height,
-                column_tabular, column_fire_cost_tabular,fire_protection_percentage_column_inp):
+def column_cost_calculation( total_A, total_story, baysize1, baysize2, bay_total_load, story_height,
+                column_tabular, column_fire_cost_tabular,fire_protection_percentage_column_inp,
+                             unit_material_fireprotection,unit_labor_beam):
 
     building_index=1
     i1 = building_index - 1
@@ -108,16 +109,20 @@ def column_cost( total_A, total_story, baysize1, baysize2, bay_total_load, story
     column_protection_cost = cost_column[i1][1:4]*fire_protection_percentage_column_inp
     floor_load_max=max(floor_load[:, 0, i1])
     i1 += 1
+    column_protection_labor=column_protection_cost/unit_material_fireprotection*unit_labor_beam
 
-    return column_cost, column_protection_cost, floor_load_max
+    return column_cost, column_protection_cost, floor_load_max, column_protection_labor
 
-def floor_system_cost(total_A, floor_composite, beam_fire_cost, fireprotectionbeam_ori,fire_protection_percentage_beam_inp):
+def floor_system_cost(total_A, floor_composite, beam_fire_cost, fireprotectionbeam_ori,fire_protection_percentage_beam_inp,unit_material_fireprotection,unit_labor_beam):
     # fire protection cost on floor system per sq.ft for different building type
     # fireprotectionbeam_default = [0.86, 0.86, 0.79, 0.79, 0.79, 0.79, 0.79, 0.79]
     # floor_defalut_rsmeans = [27.63, 20.56, 13.99, 13.99, 15.39, 13.99, 15.39, 15.39]
     floor_cost = (floor_composite-fireprotectionbeam_ori)*total_A
     floor_protection_cost = beam_fire_cost*total_A*fire_protection_percentage_beam_inp
-    return floor_cost, floor_protection_cost
+
+    floor_labor_hour = floor_protection_cost/unit_material_fireprotection*unit_labor_beam
+
+    return floor_cost, floor_protection_cost, floor_labor_hour
 
 
 def fire_service_cost(total_A, total_story, building_information_ori,building_index):
