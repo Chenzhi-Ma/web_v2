@@ -4,7 +4,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import pickle
-from functions import column_cost, floor_system_cost,fire_service_cost,calculate_fireprotection_cost
+from functions import column_cost_calculation, floor_system_cost,fire_service_cost,calculate_fireprotection_cost
 import matplotlib.pyplot as plt
 import streamlit as st
 
@@ -23,6 +23,19 @@ st.markdown('### **Enter the path for saving the files**')
 save_path = st.text_input('Path:')
 st.write(save_path)
 st.session_state.path_for_save = save_path     # Attribute API
+
+
+st.markdown('# Introduction and Assumptions:')
+st.markdown('## Construction cost database')
+st.markdown('### 1. Construction cost estimation')
+st.markdown('### 2. Direct damage estimation')
+st.markdown('### 3. Indirect damage estimation')
+st.markdown('### 4. Maintenance estimation')
+st.markdown('### 5. Co-benefit estimation')
+st.markdown('### 6. ASTM indexes calculation')
+
+
+
 
 # Save the DataFrame when the user clicks the button
 #if st.button('Save DataFrame'):
