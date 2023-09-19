@@ -240,14 +240,12 @@ with st.expander('General description on direct and indirect damage estimation:'
          use_column_width=None)
 with st.expander('Details on direct damage estimation:', expanded=False):
 
-
-
     st.markdown('''
     **Firstly**, obtained the fragility function for all the possible fire compartment based on the following flow chart:
     ''')
     fig_damage_assessment = "images/damage assessment.jpg"
     st.image(fig_damage_assessment,
-             caption='   Procedure for the development of the Local Fragility Functions FFL,i corresponding to a fire located in compartment i.[TG]'                ,
+             caption='  Procedure for the development of the Local Fragility Functions FFL,i corresponding to a fire located in compartment i.[TG]'                ,
              use_column_width=None)
 
     st.markdown('''
