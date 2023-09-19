@@ -85,7 +85,6 @@ with st.container():
 
         st.dataframe(Cobenefits_value_df, use_container_width=True, hide_index=True)
         st.session_state.Cobenefits_value_df = Cobenefits_value_df  # Attribute API
-
     if alter_design:
         with col2:
             st.write("**Results for alternative design**")
