@@ -49,7 +49,7 @@ with st.sidebar:
             construction_cost_df_alt = st.session_state.construction_cost_df_alt
             total_labor_hour_alt = construction_cost_df_alt['Floor'][2] + construction_cost_df_alt['Column'][2]
             rent_loss_alt = (total_labor_hour_alt / number_crew + Cure_time) * Unit_rent_loss / 24 / 30 * Affect_area*per_rented
-            cobenefits_value_alt = 0
+            Cobenefits_value_alt = 0
 
 
 
@@ -57,17 +57,17 @@ with st.sidebar:
     cobenefits_method = st.selectbox(
         'How would you like to define other potential co-benefit',
         ('input own value','Default method' ))
-    cobenefits_value=0
+    Cobenefits_value=0
     if cobenefits_method == 'Default method':
         st.write("you select default method")
     if cobenefits_method == 'input own value':
-        cobenefits_value = st.number_input("Input co-benefits")
+        Cobenefits_value = st.number_input("Input co-benefits")
 
     if alter_design:
         if cobenefits_method == 'Default method':
             st.write("you select default method")
         if cobenefits_method == 'input own value':
-            cobenefits_value_alt = st.number_input("Input co-benefits (alt.)")
+            Cobenefits_value_alt = st.number_input("Input co-benefits (alt.)")
 
 
 with st.container():
@@ -75,15 +75,15 @@ with st.container():
     st.write("---")
     data = {
         'rent loss': [int(rent_loss)],
-        'Cobenefit': [cobenefits_value],
+        'Cobenefit': [Cobenefits_value],
     }
-    cobenefits_value_df = pd.DataFrame(data)
+    Cobenefits_value_df = pd.DataFrame(data)
 
     col1, col2 = st.columns(2)
     with col1:
         st.write("**Results for reference design**")
 
-        st.dataframe(cobenefits_value_df, use_container_width=True, hide_index=True)
+        st.dataframe(Cobenefits_value_df, use_container_width=True, hide_index=True)
         st.session_state.Cobenefits_value = Cobenefits_value_df  # Attribute API
 
     if alter_design:
@@ -93,9 +93,9 @@ with st.container():
                 'rent loss': [int(rent_loss_alt)],
                 'Cobenefit': [cobenefits_value_alt],
             }
-            cobenefits_value_alt_df = pd.DataFrame(data)
+            Cobenefits_value_alt_df = pd.DataFrame(data)
 
-            st.dataframe(cobenefits_value_alt_df, use_container_width=True, hide_index=True)
+            st.dataframe(Cobenefits_value_alt_df, use_container_width=True, hide_index=True)
             st.session_state.Cobenefits_value_alt = Cobenefits_value_alt_df  # Attribute API
 
 
