@@ -84,7 +84,7 @@ with st.container():
         st.write("**Results for reference design**")
 
         st.dataframe(Cobenefits_value_df, use_container_width=True, hide_index=True)
-        st.session_state.Cobenefits_value = Cobenefits_value_df  # Attribute API
+        st.session_state.Cobenefits_value_df = Cobenefits_value_df  # Attribute API
 
     if alter_design:
         with col2:
@@ -96,6 +96,6 @@ with st.container():
             Cobenefits_value_alt_df = pd.DataFrame(data)
 
             st.dataframe(Cobenefits_value_alt_df, use_container_width=True, hide_index=True)
-            st.session_state.Cobenefits_value_alt = Cobenefits_value_alt_df  # Attribute API
+            st.session_state.Cobenefits_value_df_alt = Cobenefits_value_alt_df  # Attribute API
 
 
