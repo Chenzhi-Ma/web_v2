@@ -97,12 +97,12 @@ with st.container():
     # two subplots are adopted
     plt.subplots_adjust(left=0.1, right=0.9, top=0.9, bottom=0.1, wspace=0.4, hspace=0.4)
     value_ref=[int(CI_ref),int(DD_ref.iloc[0]),int(ID_ref.iloc[0]),int(CM_ref.iloc[0]),int(CB_ref.iloc[0]),int(pvlcc_ref.iloc[0])]
-    value_alt=[int(CI_alt),int(DD_alt.iloc[0]),int(ID_alt.iloc[0]),int(CM_alt.iloc[0]),int(CB_alt.iloc[0]),int(pvlcc_alt.iloc[0])]
 
     x = np.arange(len(value_ref))
 
     if alter_design:
-
+        value_alt = [int(CI_alt), int(DD_alt.iloc[0]), int(ID_alt.iloc[0]), int(CM_alt.iloc[0]), int(CB_alt.iloc[0]),
+                     int(pvlcc_alt.iloc[0])]
         data = {
             '': ['Reference design', "Alternative design"],
             "Constuction cost": [int(CI_ref),int(CI_alt)],
@@ -119,7 +119,7 @@ with st.container():
         ax1.set_xticks(x,('Constuction','Direct','Indirect','Maintenance', 'Co-benefit', 'PVLCC'))
         p2 = ax1.bar(x + bar_width / 2, value_alt, bar_width, label='Alt.', align='center')
         ax1.set_ylabel('Cost ($)')
-        ax1.set_title('Reference design lifetime cost breakdown')
+        ax1.set_title('Lifetime cost breakdown')
         ax1.legend()
 
         st.pyplot(f1)
@@ -149,3 +149,13 @@ with st.container():
         st.session_state.Cost_summary_ref = Cost_summary_ref
 
 
+        bar_width=0.35
+        ax1 = f1.add_subplot(2, 1, 1)
+        ax1.grid(True)
+        p1 = ax1.bar(x - bar_width / 2, value_ref,bar_width, label='Ref.', align='center')
+        ax1.set_xticks(x,('Constuction','Direct','Indirect','Maintenance', 'Co-benefit', 'PVLCC'))
+        ax1.set_ylabel('Cost ($)')
+        ax1.set_title('Lifetime cost breakdown')
+        ax1.legend()
+
+        st.pyplot(f1)
