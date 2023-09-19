@@ -91,7 +91,7 @@ with st.container():
             st.write("**Results for alternative design**")
             data = {
                 'rent loss': [int(rent_loss_alt)],
-                'Cobenefit': [cobenefits_value_alt],
+                'Cobenefit': [Cobenefits_value_alt],
             }
             Cobenefits_value_alt_df = pd.DataFrame(data)
 
