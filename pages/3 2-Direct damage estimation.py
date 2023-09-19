@@ -9,40 +9,6 @@ import matplotlib.pyplot as plt
 st.set_page_config(page_title="Direct damage estimation")
 
 
-with open('database_ori_mat.pkl', 'rb') as f:
-    database_ori_mat = pickle.load(f)
-with open('totalcost_mat.pkl', 'rb') as f:
-    totalcost_mat = pickle.load(f)
-default_cost_file = 'unit_cost_data.csv'
-
-# import the matlab file .mat, database_original.mat is a 1*1 struct with 7 fields, inlcude all the original data from 130 simulaitons
-database_ori = database_ori_mat['database_original']
-
-# get the detailed original value from rsmeans
-costdetails_ori_mat = database_ori['costdetails']
-costdetails_ori = costdetails_ori_mat[0, 0]
-
-# the cost multiplier
-proportion_ori_mat = database_ori['proportion']
-proportion_ori = proportion_ori_mat[0, 0]
-
-# import the building information, include the fire rating, floor area, building type, stories
-building_information_ori_mat = database_ori['building_information']
-# variable in different columns: 1floor area, 2story, 3perimeter, 4total cost, 5sq. cost, 6fire type in IBC, 7fire type index, 8building type,
-# 9beam fire rating in rsmeans, 10column fire rating in rsmeans, 11 IBCbeam, 12 IBC column,
-# 13 adjusted column cost,
-# 14 adjusted column fire protection cost for 1h, 15 adjusted column fire protection cost for 2h, 16 adjusted column fire protection cost for 3h
-building_information_ori = building_information_ori_mat[0, 0]
-
-# the total cost,1 - 2 columns: total cost (original rsmeans value, without adjustment in floor system, column, fire rating), second column is sq.ft cost
-# 3 - 4 columns: rsmeans value minus the floor system cost, column system cost
-# 5 - 6 columns: value with adjusted floor system and columns, fire rating is based on IBC coding
-
-totalcost_ori = totalcost_mat['totalcost_num']
-    # define new vlue in the database
-
-
-
 
 st.header("Economic impact of performance-based structural fire design")
 
@@ -76,6 +42,9 @@ with st.sidebar:
 
     # Display a text astreamrea for the user to input the array
 
+    construction_cost_df = st.session_state.construction_cost_df
+    CI = construction_cost_df['Floor'][0] + construction_cost_df['Column'][0]
+
     damage_state_cost_value = st.text_area("Enter your damage state value (comma-separated):")
     # Process the input and convert it into a NumPy array
     if damage_state_cost_value:
@@ -86,9 +55,7 @@ with st.sidebar:
         except ValueError:
             st.write("Invalid input. Please enter a valid comma-separated list of numbers.")
     else:
-        damage_state_cost_value=[1,10,100,1000]
-
-
+        damage_state_cost_value=[1.00*CI,10.00*CI,100.00*CI,1000.00*CI]
 
     fire_load_distribution = st.selectbox(
         'How would you like to define the fire load distribution',
@@ -115,8 +82,12 @@ with st.sidebar:
 
     damage_value = np.interp(qfuel, hazard_intensity, vulnerability_data)
     damage_value_average=np.average(damage_value)
-
-    alter_design = st.checkbox('Do you want to get damage cost value for alternative design?')
+    st.markdown("**parameters for alternative design**")
+    #alter_design = st.checkbox('Do you want to get damage cost value for alternative design?')
+    if "alter_design" in st.session_state:
+        alter_design = st.session_state.alter_design
+    else:
+        alter_design=[]
     if alter_design:
 
         fragility_curve_method_alt = st.selectbox(
@@ -171,11 +142,11 @@ with st.container():
     Annual_loss=Severe_fire_pro*damage_value_average*10e-7*Compartment_num
 
     data = {
-        'Average loss per severe fire': [damage_value_average],
-        'Annual loss': [Annual_loss],
-        'Study year': [study_year],
-        'Study year loss': [Annual_loss*study_year],
-        'Severe fire frequency per compartment (*10-7)': [Severe_fire_pro],
+        'Average loss per severe fire': [int(damage_value_average)],
+        'Annual loss': [int(Annual_loss)],
+        'Study year': [int(study_year)],
+        'Study year loss': [int(Annual_loss*study_year)],
+        'Severe fire frequency per compartment (*10-7)': [int(Severe_fire_pro)],
     }
     direct_damage_loss = pd.DataFrame(data)
 
@@ -227,11 +198,11 @@ with st.container():
         Annual_loss_alt = Severe_fire_pro * damage_value_average_alt * 10e-7 * Compartment_num
         data_alt = {
 
-            'Average loss per severe fire': [damage_value_average_alt],
-            'Annual loss': [Annual_loss_alt],
-            'Study year': [study_year],
-            'Study year loss': [Annual_loss_alt * study_year],
-            'Severe fire frequency per compartment (*10-7)': [Severe_fire_pro],
+            'Average loss per severe fire': [int(damage_value_average_alt)],
+            'Annual loss': [int(Annual_loss_alt)],
+            'Study year': [int(study_year)],
+            'Study year loss': [int(Annual_loss_alt * study_year)],
+            'Severe fire frequency per compartment (*10-7)': [int(Severe_fire_pro)],
         }
         direct_damage_loss_alt = pd.DataFrame(data_alt)
         st.write(" Summary for alternative design")
@@ -249,6 +220,7 @@ with st.container():
         ax1.set_xlabel('Fire load (MJ)')
         ax1.set_ylabel('Probability')
         ax1.set_title('Fragility curves')
+
 
         ax2 = f2.add_subplot(4, 1, 2)
         ax2.grid(True)

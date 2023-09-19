@@ -78,7 +78,7 @@ def Modify_database():
         baysize2_inp = 25  # ft
 
         # Set up the inputs for Material Properties
-        Building_para_modi = st.checkbox('Modify default building paramter')
+        Building_para_modi = st.checkbox('Modify default building parameter')
         if Building_para_modi:
             col1,col2 = st.columns(2)
             with col1:
@@ -343,6 +343,8 @@ def Modify_database():
 
 
         if alter_design:
+            st.session_state.alter_design = alter_design  # Attribute API
+
             column_fire_cost_given_rate = column_protection_cost_alt[column_fire_rating_inp_alt - 1]
             floor_protection_cost_given_rate = floor_protection_cost_alt[Beam_fire_rating_inp_alt - 1]
             column_fire_labor_given_rate = column_protection_labor_alt[column_fire_rating_inp_alt - 1]
