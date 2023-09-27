@@ -259,7 +259,9 @@ def Modify_database():
 
 
     with st.container():
+        st.markdown('**Note: detailed building design and fire design can be found on page "Explore construction cost database"**')
         st.subheader('Results')
+
         st.write("---")
 
         data = {
@@ -620,7 +622,7 @@ def User_defined_building():
             member_price = np.zeros([num_member])
             member_unit_labor= np.zeros([num_member])
             member_labor = np.zeros([num_member])
-
+            thickness_record= np.zeros([num_member])
             for i in range(0, num_member ):
                 text = member_shape_inp[i]
                 text = text.replace("*", "×")
@@ -655,11 +657,13 @@ def User_defined_building():
                     member_unit_price[i]=calculate_fireprotection_cost(member_parameter_thick[i],para_fireprotection,
                                                                        member_parameter_peri[i],member_fire_material_inp[i],member_shape_index_inp[i])
                     member_price[i]=member_unit_price[i]*member_num_inp[i]*member_length_inp[i]/12
+                    thickness_record[i] = member_parameter_thick[i]
 
                 elif Thickness_method == 'Thickness is given':
                     member_unit_price[i] = calculate_fireprotection_cost(member_fire_thick_inp[i], para_fireprotection,
                                                                          member_parameter_peri[i],member_fire_material_inp[i],member_shape_index_inp[i])
                     member_price[i]=member_unit_price[i]*member_num_inp[i]*member_length_inp[i]/12
+                    thickness_record[i]=member_fire_thick_inp[i]
 
 
                 elif Thickness_method == 'Ignore the thickness, use RSMeans default thickness':
@@ -678,6 +682,7 @@ def User_defined_building():
 
                     member_price[i]=member_unit_price[i]*member_num_inp[i]*member_length_inp[i]/12
                     member_labor[i] = member_unit_labor[i] * member_num_inp[i] * member_length_inp[i]/12
+                    thickness_record[i]=0
 
 
             total_fire_protection_cost = sum(member_price)
@@ -717,6 +722,8 @@ def User_defined_building():
 
 
     with st.container():
+        st.markdown('**Note: detailed building design and fire design can be found on page "Explore construction cost database"**')
+
         st.subheader('Results')
         st.write("---")
         if uploaded_file==None:
@@ -830,10 +837,10 @@ def User_defined_building():
         }
         construction_cost_df = pd.DataFrame(data, index=[0, 1])
         st.session_state.construction_cost_df = construction_cost_df  # Attribute API
-        data_array=[member_price,member_labor]
+        data_array=[member_price,member_labor,thickness_record]
 
 
-        construction_cost_detail = pd.DataFrame(data_array, index=['Construction cost', 'Labor hour (1 crew)'])
+        construction_cost_detail = pd.DataFrame(data_array, index=['Construction cost', 'Labor hour (1 crew)', 'Member thickness'])
         st.session_state.construction_cost_detail = construction_cost_detail  # Attribute API
 
         st.session_state.construction_cost_detail

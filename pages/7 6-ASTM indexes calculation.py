@@ -128,7 +128,7 @@ with st.container():
         data = {
             "PVLCC_ref": [int(pvlcc_ref.iloc[0])],
             "PVLCC_alt": [int(pvlcc_alt.iloc[0])],
-            "Net benetif": [int(net_b.iloc[0])],
+            "Net benefit": [int(net_b.iloc[0])],
             "Net cost": [int(net_c.iloc[0])],
             "Present net value": [int(pnv.iloc[0])],
         }
