@@ -35,7 +35,7 @@ with st.sidebar:
         Maintenance_cost_df=st.session_state.Maintenance_cost_df   # Attribute API
         CM_ref=Maintenance_cost_df['Maintenance cost']
         Cobenefits_value_df=st.session_state.Cobenefits_value_df    # Attribute API
-        CB_ref=Cobenefits_value_df['Cobenefit']
+        CB_ref=Cobenefits_value_df['Cobenefit']-Cobenefits_value_df['rent loss']
         pvlcc_ref = CI_ref + DD_ref + ID_ref+CM_ref - CB_ref
 
         if alter_design:
@@ -48,7 +48,7 @@ with st.sidebar:
             maintenance_cost_total_alt=st.session_state.maintenance_cost_total_alt  # Attribute API
             CM_alt=maintenance_cost_total_alt['Maintenance cost']
             Cobenefits_value_df_alt=st.session_state.Cobenefits_value_df_alt    # Attribute API
-            CB_alt=Cobenefits_value_df_alt['Cobenefit']
+            CB_alt=Cobenefits_value_df_alt['Cobenefit']-Cobenefits_value_df_alt['rent loss']
             pvlcc_alt = CI_alt + DD_alt + ID_alt + CM_alt - CB_alt
             net_b = DD_ref + ID_ref-CB_ref - DD_alt - ID_alt + CB_alt
             net_c = -CI_ref - CM_ref + CI_alt + CM_alt
