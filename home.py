@@ -279,7 +279,10 @@ with st.expander('Details:', expanded=False):
              caption=' Flowchart of the cost-benefit analysis.',
              use_column_width=None)
 
-
+st.markdown('''
+# Source code:  
+## [Github](https://github.com/Malcolmfxy/web_v2)
+''' )
 
 
 # Save the DataFrame when the user clicks the button
