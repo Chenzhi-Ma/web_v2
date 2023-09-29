@@ -562,7 +562,7 @@ def User_defined_building():
 
             else:
                 para_fireprotection = [
-                    [18.46, 0.4572],  # 1 for sfrm
+                    [18.59, 0.4126],  # 1 for sfrm
                     [170.7, 4.654], #2 for intumescent
                     [0,0],
                     [0,0],
