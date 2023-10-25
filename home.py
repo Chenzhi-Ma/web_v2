@@ -30,13 +30,13 @@ floor_diagram_rsmeans = "images/concrete slab over metal deck.jpg"
 
 st.markdown('# Introduction and Assumptions:')
 st.markdown('### Construction cost database')
-with st.expander('Descrition:', expanded=False):
+with st.expander('Description:', expanded=False):
     st.markdown(''' The construction database selected eight building typologies consisting of four occupancy types and two sizes per occupancy.
      The cost analysis is run on 130 building prototypes selected amongst the eight typologies based on the RS.Means square foot cost estimation.
       To estimate costs, the **building type, perimeter, total area, story, and story height** are needed. These parameters can be viewed in the page **Explore
       construction cost database**. Additionally, the width-to-length ratio of the prototypes is set 3/4, and the cost value is based on the US national average 
-      for 2022. Considering that the construction cost database mainly focuses on the composite steel frame structures,several parameters 
-       in the default RS.Means database are adjusted, such as the floor systems and fire rating on steelwork.**The fire rating for the steel 
+      for 2022. Considering that the construction cost database mainly focuses on the composite steel frame structures, several parameters 
+       in the default RS.Means database are adjusted, such as the floor systems and fire rating on steelwork. **The fire rating for the steel 
        and composite structural members is adjusted based on the International Building Code (IBC) requirements.**
     ''')
     tab1, tab2, tab3 = st.tabs(["**Floor system**", "**Column**", "**Other fire services**"
