@@ -1,11 +1,6 @@
 
 # Import the necessary packages
-import streamlit as st
-import pandas as pd
-import numpy as np
-import pickle
-from functions import column_cost_calculation, floor_system_cost,fire_service_cost,calculate_fireprotection_cost
-import matplotlib.pyplot as plt
+
 import streamlit as st
 
 st.set_page_config(
@@ -31,19 +26,19 @@ floor_diagram_rsmeans = "images/concrete slab over metal deck.jpg"
 st.markdown('# Introduction and Assumptions:')
 st.markdown('### Construction cost database')
 with st.expander('Description:', expanded=False):
-    st.markdown(''' The construction database selected eight building typologies consisting of four occupancy types and two sizes per occupancy.
-     The cost analysis is run on 130 building prototypes selected amongst the eight typologies based on the RS.Means square foot cost estimation.
-      To estimate costs, the **building type, perimeter, total area, story, and story height** are needed. These parameters can be viewed in the page **Explore
-      construction cost database**. Additionally, the width-to-length ratio of the prototypes is set 3/4, and the cost value is based on the US national average 
+    st.markdown('''<div align='justify'>The construction database selected eight building typologies consisting of four occupancy types and two sizes per occupancy.
+     The cost analysis is run on 130 building prototypes selected amongst the eight typologies based on the RSMeans square foot cost estimation.
+      To estimate costs, the <b>building type, perimeter, total area, story, and story height</b> are needed. These parameters can be viewed in the page <b>Explore
+      construction cost database</b>. Additionally, the width-to-length ratio of the prototypes is set 3/4, and the cost value is based on the US national average 
       for 2022. Considering that the construction cost database mainly focuses on the composite steel frame structures, several parameters 
-       in the default RS.Means database are adjusted, such as the floor systems and fire rating on steelwork. **The fire rating for the steel 
-       and composite structural members is adjusted based on the International Building Code (IBC) requirements.**
-    ''')
+       in the default RSMeans database are adjusted, such as the floor systems and fire rating on steelwork. <b>The fire rating for the steel 
+       and composite structural members is adjusted based on the International Building Code (IBC) requirements.</b>
+     ''',unsafe_allow_html=True)
     tab1, tab2, tab3 = st.tabs(["**Floor system**", "**Column**", "**Other fire services**"
                                               ])
     with tab1:
         st.markdown(''' 
-        The default floor system in RS.Means may not be the commonly used steel-concrete composite systems, for example,
+        The default floor system in RSMeans may not be the commonly used steel-concrete composite systems, for example,
         concrete slab over metal deck with steel joists and joist girder (Left figure) is adopted in default hospital prototypes. 
         This floor system  in the database is replaced with a composite metal deck with shear connector (Right figure) for consistency in the type of 
         steel-concrete composite systems considered.
@@ -51,12 +46,12 @@ with st.expander('Description:', expanded=False):
 
         col1, col2 = st.columns(2)
         with col1:
-            st.image(floor_diagram_rsmeans, caption='Default floor system from RS.Means (for certain occupancies)', use_column_width=None)
+            st.image(floor_diagram_rsmeans, caption='Default floor system from RSMeans (for certain occupancies)', use_column_width=None)
         with col2:
             st.image(floor_diagram, caption='Updated floor system in the construction database', use_column_width=None)
     with tab2:
         st.markdown(''' 
-        The default column number calculation method is not consistant across different building types in the square foot
+        The default column number calculation method is not consistent across different building types in the square foot
         cost estimation. For example, in the left figure for apartment building, the number of column in high-rise (with story 8-24) buildings is much
         higher that that for mid-rise (with story 5-7) buildings, even though the area and story is close 
         **(area 74500 story 7 vs area 80750 story 8).**  
@@ -89,26 +84,63 @@ with st.expander('Description:', expanded=False):
         * **Fire pump cost:** includes the cost of both the fire pump and corresponding controller of the whole building.  
         * **Fire alarm cost:** fire alarm cost of the whole building.  
         * **Ceiling fire protection cost:** cost of non-structural fire rated materials in the ceiling (at all stories).
-        May include “suspended gypsum boards” for example. 
+        May include “suspended gypsum boards” for example.  
         ''')
-
-
+        st.markdown('''
+        **Noting that in the RSMeans prototypes, the costs of sprinkler and alarm system are only dependent 
+        on the floor area and building type, and the fire pump costs are only dependent on the building type.**
+        ''')
 st.markdown('### 1. Construction cost estimation')
-with st.expander('Method 1: modify database:', expanded=False):
+with st.expander('Description:', expanded=False):
+    flow_chart_1 = "images/flowchart construction cost1.jpg"
+    flow_chart_2 = "images/flowchart construction cost2.jpg"
+    col1, col2 = st.columns(2)
+    with col1:
+        st.markdown('''
+          The construction database established is used to support the development of a generalized method for estimating 
+          the cost of passive fire protection on steelwork in buildings. Figure 1 shows the simplified flowchart of the method 
+          of assessing the passive fire protection cost on different designs. The obtained initial construction cost can be used 
+          for cost-benefit analysis and can help to make the decisions among different designs.  
+          ''')
+    with col2:
+        st.image(flow_chart_1,
+                 caption='Figure 1: Overall flowchart of assessing the construction cost of passive fire protection on steelwork. '
+                         'Refer to Figure 2 for the detailed flowchart.',
+                 use_column_width=None)
+
+
+    st.markdown('''
+                Figure 2 shows the detailed flowchart of three different approaches of assessing the construction cost 
+                of passive fire protection.
+                ''')
+    st.image(flow_chart_2, caption=' Figure 2: Detailed flowchart of assessing the construction cost of passive fire '
+                                   'protection with different methods. Refer to Figure 1 for the overall flowchart..',
+         use_column_width=None)
+
+    st.markdown('''
+    Basic assumptions:  
+    * The cost value is based on the **2022 RSMeans national average value**, and an additional correction factor 
+    might be necessary in regions where the labor cost deviates significantly from the national average value.
+    * The default unit cost values at different fire ratings and fire protection materials are pre-defined in the construction cost database, 
+    but they can be replaced by the user defined unit cost in the web interface to achieve a more accurate cost estimation.
+    * The construction cost database and the generalized method are based on specific building design parameters, and while the method 
+    allows adjusting passive fire protection costs when building design parameters change, potential cost variations in associated 
+    nonstructural or structural components are not accounted for in the total construction cost adjustment. In these cases, working 
+    with the absolute value of passive fire protection cost could be more convenient than the cost multiplier.
+    ''')
+
+with st.expander('Method 1 & 2: Variation in the database:', expanded=False):
        # st.markdown('1')
     #st.markdown('#### Subtool 1: modify database')
-    flow_chart_method1 = "images/flow chart method 1.jpg"
-    st.image(flow_chart_method1, caption=' Flowchart for quantifying the fire protection cost for buildings in the database.',
-         use_column_width=None)
 
     tab1, tab2, tab3,tab4 = st.tabs(["**Building parameter**", "**Fire design parameter**", "**Fire protection cost value**",
                                                "**Enable Alternative design**"])
 
     with tab1:
         st.markdown('Input building index should be in the range 1 to 130, default fire rating, '
-                    'floor area, stories, etc, can be found in the database summary of **Explore construction cost database**.'                      )
+                    'floor area, story, etc, can be found in the _database summary_ of **Explore construction cost database**.'                      )
         st.markdown('''
-        For the default building parameter modification,the initial values are the same as the default value in the database.  
+        For the default building parameter modification, the initial values are the same as the default value in the database.  
         ''')
 
         st.markdown('''
@@ -120,11 +152,12 @@ with st.expander('Method 1: modify database:', expanded=False):
         * Modifying bay total load: the bay total load would affect the column section size and then can make a difference in
         the column fire protection cost and column construction cost. If the warning (Floor load is over the max column 
         loading capacity) shows, it means the maximum load is higher than the maximum capacity (right now, it is 1000 kips 
-        per column) in the column. Users can modify this file by uploading their own cost data.
+        per column) of the column. Users can modify this file by uploading their own cost data (A1-G16 provide the correlation between 
+        the column cost and capacity).
         It should also affect the unit cost of the floor system (beam size would change due to higher or lower loads) 
         and the corresponding fire protection cost, **but right now is not considered in the codes**.  
         * Modifying the building stories: can have a minor effect on the column fire protection cost since the number of 
-        column are changed.  
+        column are changed.  The fire protection cost in floor system would not change since it is only dependent on the floor area.
         * Modifying the bay size x direction and bay size y direction: affect the number of column fire protection 
         cost. Besides, it should also affect the size and number of beams, **but right now we have not developed 
         the relationship between the bay size and floor system fire protection cost**.  
@@ -133,12 +166,12 @@ with st.expander('Method 1: modify database:', expanded=False):
     with tab2:
         st.markdown(''' 
         For the default fire design parameter modification, the initial values are the same as the default value in the database.   
-        * The unit fire protection costs for beams and columns with different fire ratings or materials are pre-defined. 
-        Once the fire rating or material is changed, the fire protection cost would be updated. User can also provide their 
+        * The unit fire protection costs for beams and columns with different **fire ratings** or **fire protection materials** 
+        are pre-defined. Once the fire rating or material is changed, the fire protection cost would be updated. User can also provide their 
         own material cost data under different fire ratings, just by uploading their own unit cost value. However it needs 
         to be noted that the format of the unit cost value should be the same as the sample, only the values in the sample 
         can be modified.  
-        * Modifying the beam or column fire protection percentage: the cost of beam/column fire protection cost, 
+        * Modifying the **percentage of protected beam or column**: the cost of beam/column fire protection cost, 
         and labor hour would simply be discounted by the inputted percentage. If you want to do a 
         more detailed modification, such as specifying that only central beam is unprotected, it can be 
         done by selecting “user-defined building” function or collecting the percentage of the central beam.
@@ -146,29 +179,37 @@ with st.expander('Method 1: modify database:', expanded=False):
 
     with tab3:
         st.markdown(''' 
-        The unit cost data can be modified and uploaded by the user. In row 1-41, column 1-7, the **column construction cost**, **fire protection cost
-        and loading capacity** can be modified. In row 1-41, column 10-14, the **floor system fire protection cost** can be modified. In row 7-25, column 15-24
-        the **unit beam fire protection cost** with different section size can be modifed.
-        In row 1-6, column 25-33, the value related to **labor hour** can be calculated.
-        * Column construction cost: The default unit construction cost of column is obtained from RS.Means, based on the floor area and bay load, the column size
-        is selected automatically. User can change the table to get higher loading capacity. The following figure shows how to determine the column size when
-        floor area and floor load are given:
+        The unit cost data can be modified and uploaded by the user. In A1-G41, the **column construction cost**, **fire protection cost
+        and loading capacity** can be modified. In J1-N41, the **floor system fire protection cost** can be modified. In P7-X25
+        the **unit beam fire protection cost** with different section size can be modified.
+        In Z1-AG6, the cost value related to CREW-G2, SFRM are listed and from which the **labor hour** was calculated, increasing the bare labor 
+        cost can increase the labor hour needed.
+        * Column construction cost: The default unit construction cost of column is dependent on the column size. The column size 
+        is selected automatically based on the floor area and bay load. User can change the table to get higher loading capacity. 
+        The following figure shows how to determine the column size when floor area and floor load are given:
         ''')
         fig_column_determine = "images/column size selection.jpg"
         st.image(fig_column_determine,
                  caption=' Flowchart for determine steel column with floor area and load given.',
                  use_column_width=None)
         st.markdown(''' 
-        * Column fire protection cost: in the default cost value, the unit of SFRM and intumescent are provided for column size 8, 10, 12 and 14. The **1 h fire rating is obtained by
-        interpolating the RS.Means value for 2h,3h,and 4h fire rating**.
-        * Floor system fire protection cost: the floor system fire protection cost at different fire rating is **based on the 20*25 typical bay** with 80 psi
-        floor load (19.99 USD/sq.ft) and 115 psi floor load (20.65 USD/sq.ft). If user wants to change the typical bay size, the new floor system cost should be provided to
-        get a precise estimation on the cost multiplier and total construction cost. Otherwise, only the total floor system fire protection cost would be updated.
-        * Unit beam fire protection cost: this part mainly **affect the user-defined building fire protection cost**, because the fire protection cost for any given section size 
-        is calculated by interpolating the exposed perimater and total cost.
-        * Labor hour: The estimation of labor hour is based on the unit cost of crew G-2, which is 1139.28 USD per day (8 HR for working). In RS.Means, each unit cost is composed by bare material cost,
+        * Column fire protection cost: in the default cost value, the unit of SFRM and intumescent 
+        are provided for column size 8, 10, 12 and 14. The **1 h fire rating is obtained by
+        extrapolating the RSMeans value for 2h,3h,and 4h fire rating**.
+        * Floor system fire protection cost: the floor system fire protection cost at different fire 
+        rating is **based on the 20*25 typical bay** with 80 psi
+        floor load (19.99 USD/sq.ft) and 115 psi floor load (20.65 USD/sq.ft). If user wants to change 
+        the typical bay size, the new floor system cost should be provided to
+        get a precise estimation on the cost multiplier and total construction cost. Otherwise, only 
+        the total floor system fire protection cost would be updated.
+        * Unit beam fire protection cost: this part mainly **affect the user-defined building fire 
+        protection cost**, because the fire protection cost for any given section size 
+        is calculated by interpolating the exposed perimeter and total cost.
+        * Labor hour: The estimation of labor hour is based on the unit cost of crew G-2, which 
+        is 1139.28 USD per day (8 HR for working). In RSMeans, each unit cost is composed by bare material cost,
         bare labor cost, and bare equipment cost. The **labor hour is estimated by bare labor cost / 1139.28 *24**. 
-        The value of $1139.28 and bare labor cost for unit SFRM can be updated in the unit cost file. **For the intumescent, the labor hour is set as 0 to assume that the intumescent
+        The value of $1139.28 and bare labor cost for unit SFRM can be updated in the unit cost 
+        file. **For the intumescent, the labor hour is set as 0 to assume that the intumescent
         coating is applied off-site.**
         
         ''')
@@ -177,33 +218,58 @@ with st.expander('Method 1: modify database:', expanded=False):
         st.markdown(''' 
         Enable interpolation: for the cost of other the fire services such as partition, sprinkler, 
         fire pump, alarm, and ceiling, these values can be obtained from the construction cost database 
-        based on the prototypes in the RS.Means. **The newest value can be interpolated by the 
+        based on the prototypes in the RSMeans. **The newest value can be interpolated by the 
         floor area based on the known values in the database**.    
         ''')
 
 with st.expander('Method 2: User-defined building:', expanded=False):
     flow_chart_method2 = "images/flow chart method 2.jpg"
-    st.image(flow_chart_method2, caption=' Flowchart for quantifying the fire protection cost for user-defined buildings.',
+    st.image(flow_chart_method2, caption='Figure 1: Flowchart for quantifying the fire protection cost for user-defined buildings.',
          use_column_width=None)
     st.markdown(''' There is a built-in database which can provide the weight, perimeter, and section area of different steel size. Therefore,
     when the steel size (e.g., W16X31, or W18X35) is listed in the input file, **the corresponding perimeter, W/D ratio or A/P ratio would be obtained
-    aotumatically.**
+    automatically.**
     ''')
-    tab1, tab2, tab3 = st.tabs(["**RS.Means default thickness**", "**Thickness adjust equation**", "**Thickness is given**"         ])
+    tab1, tab2, tab3 = st.tabs(["**RSMeans default thickness**", "**Thickness adjust equation**", "**Thickness is given**"         ])
     with tab1:
-        st.markdown("""
-        In RS.Means, the fire protection **thickness on beams or column did not consider the effects of section size**. For a given
+        unit_cost_perimeter = "images/exposed_parameter_unitcost.jpg"
+        unit_cost_volume = "images/volume_unit_cost.jpg"
+        st.markdown('''
+        In RSMeans, the fire protection **thickness on beams or column did not consider the effects of section size**. For a given
         fire rating, the thickness of fire protection would be the same for heavy section and thin section. **The unit fire protection cost
-        would linearly increse with the increase of exposed perimeter of the given section.**
-        """,unsafe_allow_html=True)
-        fig_unit_cost = "images/unit cost linear interpolation.jpg"
-        st.image(fig_unit_cost, caption='  Relationship between unit fire protection cost and exposed perimeter fitted from RS.Means data.',
-             use_column_width=None)
+        would linearly increase with the increase of exposed perimeter of the given section**, as shown in Figure 2.
+        ''',unsafe_allow_html=True)
+        col1, col2, col3 = st.columns([1, 7, 1])
+        with col2:
+            st.image(unit_cost_perimeter, caption=' Figure 2: Relationship between unit fire protection cost and exposed perimeter fitted from RSMeans data.',
+             use_column_width=True)
+
+
+        st.markdown(''' The linear fitting of cost – exposed perimeter curves at different fire rating in Figure 2 can be converted to cost
+         – volume curves by multiplying with the default fire protection thickness in RSMeans database 
+         **(5/8”, 1-1/8”, and 1-1/4” for 1-h, 2-h, and 3-h fire ratings)**, as shown in Figure 3. Then the cost of SFRM for 
+         any volume is obtained by:
+         </div>
+         <div align='center'>$C_{\\text{fire member}} = P(1) \\times V + P(2)$</div>
+         </div>  
+         where $P(1)$ and $P(2)$ are the slope and y- intercept of the linear fitting curve in Figure 2, 
+         with values of $18.59$ and $0.4126$, respectively; $C_{\\text{fire member}}$ is the passive fire protection 
+         cost of any steel member with SFRM volume $V$.
+         '''
+        ,unsafe_allow_html=True)
+        col1, col2, col3 = st.columns([1, 5, 1])
+        with col2:
+            st.image(unit_cost_volume, caption='Figure 3:  Relationship between SFRM volume and corresponding unit cost in RSMeans.',
+             use_column_width=True)
+        st.markdown('''
+        **It is worthy noting that the SFRM volume-cost curve is converted from the exposed perimeter-cost curve, which means these two options are
+        equivalent when the RSMeans default cost value is adopted.**
+         ''')
+
     with tab2:
-        st.markdown(''' justify align <div align='justify'>
-        In AISC steel design guide 19 - fire resistance of structural steel framing, the SFRM thickness adjusting equation for beams and columns
+        st.markdown('''In AISC steel design guide 19 - fire resistance of structural steel framing, the SFRM thickness adjusting equation for beams and columns
         are provided. For sections with higher W/D ratio, the thickness would be thinner. Several material constants are provided in the design guide and can help to
-        adjust the thickness of SFRM for steel columns. **The equations are listed as following**:
+        adjust the thickness of SFRM for steel columns. **The equations are listed as following**:  
         </div>
         Column:
         <div align='center'>$h=R/[c_1\ (W/D)+c_2\ ]$</div> 
@@ -214,18 +280,28 @@ with st.expander('Method 2: User-defined building:', expanded=False):
         <div align='justify'>
         where $h$ is the SFRM thickness (in.); $R$ is the fire resistance rating (hours); $W$ is the weight (lbs. per ft.); $D$ is the perimeter of column at the interface 
         of the SFRM (in.); $c_1$ and $c_2$ are material dependent constants; the subscript 1 in $h$, $W$ and $D$ refers to desired beam size and required material thickness; 
-        the subscript 2 in $h$, $W$ and $D$ refers to given beam size and material thickness shown on the individual design.          
-        For the intumescent,the thickness varies significantly with the material type and brand. There is no clear equations to adjust the thickness. Here we based on the 
-        **UL design X649** to adjust the thickness based on the given table. It worth mentioning that the **table in X649 is for column**. 
-        For the thickness adjustment of **beams**,no table or equaiton is found and the table in **X649 is also adopted provisionally**.
-        Once the thickness of the fire protection is obtained, the unit volumn of fire protection would be calculated by thickness times perimeter of steel
-        members. **Assume there is a linear relationship between the unit cost and unit volumn: cost=a*volumn+b**, where a and b are predefined constant. Users can also
-        modify this value based on their own cost data.**(temporarily)**
+        the subscript 2 in $h$, $W$ and $D$ refers to given beam size and material thickness shown on the individual design.  
         </div>
         ''',unsafe_allow_html=True)
+        st.markdown('''
+        For the intumescent,the thickness varies significantly with the material type and brand. There is no clear equations to adjust the thickness. Here we based on the 
+        **UL design X649** to adjust the thickness based on the given table. It worth mentioning that the **table in X649 is for column**.  
+        ''',unsafe_allow_html=True)
+        st.markdown('''
+        For the thickness adjustment of **beams**,no table or equation is found and the table in **X649 is also adopted provisionally**.
+        Once the thickness of the fire protection is obtained, the unit volume of fire protection would be calculated by thickness times perimeter of steel
+        members. **Assume there is a linear relationship between the unit cost and unit volume: cost=a*volume+b**, where a and b are predefined constant. Users can also
+        modify this value based on their own cost data.**(temporarily)**
+        ''',unsafe_allow_html=True)
+
+        st.markdown('''
+        **Noting that the cost data on intumescent material contains a lot of uncertainty, and very limited data are available
+        on the RSMeans.**
+        ''',unsafe_allow_html=True)
+
     with tab3:
         st.markdown(''' 
-        User should provide the thickness of each steel member in the uploaded file. **The volumn would be calculated based on this given thickness.**
+        User should provide the thickness of each steel member in the uploaded file. **The volume would be calculated based on this given thickness.**
         ''')
 
 st.markdown('### 2. Direct damage estimation')
@@ -249,7 +325,7 @@ with st.expander('Details on direct damage estimation:', expanded=False):
              use_column_width=None)
 
     st.markdown('''
-    [TG](https://doi.org/10.1016/j.engstruct.2016.01.043):'Gernay, Thomas, Negar Elhami Khorasani, 
+    [TG](https://doi.org/10.1016/j.engstruct.2016.01.043): Gernay, Thomas, Negar Elhami Khorasani, 
     and Maria Garlock. "Fire fragility curves for steel buildings in a community context: A methodology." 
     Engineering Structures 113 (2016): 259-276.
     ''')
@@ -261,6 +337,64 @@ with st.expander('Details on direct damage estimation:', expanded=False):
     Right now, only **one compartment fire is considered**, and the possibility of fire spread would considered by defined the cost value at the highest
     damage state.
     ''')
+
+st.markdown('### Fragility Curves')
+with st.expander('General Description:', expanded=False):
+    st.markdown(''' Fragility curves are used to depict the **probability of exceedance of specific damage states** defined by 
+    appropriate engineering demand parameters. These probabilities are conditioned on the intensity measure, 
+    such as ground peak acceleration in an earthquake, wind speed in a hurricane, and fire load in a fire event.
+    ''')
+    st.markdown(''' The probabilistic damage assessment accounts for uncertainties in three key areas: the fire model, 
+    the thermal response model, and the structural response model. To generate the fragility points $P(DS=DS_i|q_m)$, 
+    fire-thermo-mechanical analyses are conducted by the non-linear analysis of the building.  
+    
+    The probability of the composite floor reaching a specific 
+    damage state $DS_i$ is assessed for a given fire load $q_m$, and is calculated by Eq. (1). Once the fragility points 
+    at different fire loads are generated, the fragility curves are fitted using a two-parameter lognormal distribution 
+    function, as outlined in Eq. (2). The illustration of the fragility curves is shown in Figure 1.  
+    ''', unsafe_allow_html=True)
+
+    st.markdown(r'''
+    $$
+    \begin{align*}
+    P\left(DS=DS_i|q_m\right)=\frac{Number\ of\ simulation\ in\ damage\ state\ i\ under\ 
+        fire\ load\ q_m}{Total\ number\ of\ simulations\ under\ fire\ load\ q_m}
+    \end{align*}
+    $$
+    <div align='right'><b>Eq.1</b> 
+    ''', unsafe_allow_html=True)
+    st.markdown(r'''
+    $$
+    \begin{align*}
+    FFs(DS_i|q)=P\left(DS\geq D S_i|q\right)=\emptyset\left[\frac{\ln\
+    (MinMaxScaler\left(q\right))-\mu}{\sigma}\right]
+    \end{align*}
+    $$
+    $$
+    \begin{align*}
+    =\frac{1}{2}\left[1+erf(\frac{\ln{\left
+    (\frac{q-q_{min}}{q_{\max{-q_{min}}}}\right)}-\mu}{\sigma\sqrt2})\right]
+    \end{align*}
+    $$
+    <div align='right'><b>Eq.2</b> 
+    ''', unsafe_allow_html=True)
+
+    fig_damage_assessment = "images/sample of fragility curve.jpg"
+    col1, col2, col3 = st.columns([1, 5, 1])
+    with col2:
+        st.image(fig_damage_assessment,
+                 caption='  Figure 1: Sample of the fragility curves'                ,
+                 use_column_width=None)
+
+
+    st.markdown('''
+    From these curves, 
+    one can derive the probability of reaching a specific damage state at a given fire load, as well as the cumulative 
+    probability of encountering that damage state. This graphical representation is essential for visualizing and 
+    understanding the likelihood and severity of damage under varying fire load conditions, thereby providing valuable 
+    insights for risk assessment and structural design considerations.
+    ''', unsafe_allow_html=True)
+
 
 
 st.markdown('### 3. Indirect damage estimation')
