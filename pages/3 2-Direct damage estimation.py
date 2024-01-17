@@ -29,10 +29,11 @@ with st.sidebar:
 
         fragility_curve = pd.read_csv("fragility curve.csv")
         hazard_intensity = np.asarray(fragility_curve.iloc[:,0])
-        fragility_num = st.number_input("Input the index of the built-in fragility curves",step=1, max_value=3, min_value=1)
-        upper_bound = (fragility_num) * 5
-        lower_bound = (fragility_num - 1) * 5 + 1
+        fragility_num = st.number_input("Input the index of the built-in fragility curves",step=1, max_value=10, min_value=1)
+        upper_bound = (fragility_num) * 4+1
+        lower_bound = (fragility_num - 1) * 4 + 1
         fragility_prob = np.asarray(fragility_curve.iloc[:, lower_bound:upper_bound])
+        print(upper_bound,lower_bound,fragility_prob)
         damage_state_num=4
 
     if fragility_curve_method =='Upload file':
@@ -96,10 +97,10 @@ with st.sidebar:
 
         if fragility_curve_method_alt == 'Use built-in fragility curves':
 
-            fragility_num_alt = st.number_input("Input the index of the built-in fragility curves (alt.)", step=1, max_value=3,min_value=1)
+            fragility_num_alt = st.number_input("Input the index of the built-in fragility curves (alt.)", step=1, max_value=10,min_value=1)
 
-            upper_bound = (fragility_num_alt) * 5
-            lower_bound = (fragility_num_alt - 1) * 5 + 1
+            upper_bound = (fragility_num_alt) * 4+1
+            lower_bound = (fragility_num_alt - 1) * 4 + 1
             fragility_prob_alt = np.asarray(fragility_curve.iloc[:, lower_bound:upper_bound])
             damage_state_num = 4
 

@@ -344,13 +344,13 @@ with st.expander('General Description:', expanded=False):
     appropriate engineering demand parameters. These probabilities are conditioned on the intensity measure, 
     such as ground peak acceleration in an earthquake, wind speed in a hurricane, and fire load in a fire event.
     ''')
-    st.markdown(''' The probabilistic damage assessment accounts for uncertainties in three key areas: the fire model, 
-    the thermal response model, and the structural response model. To generate the fragility points $P(DS=DS_i|q_m)$, 
+    st.markdown(''' The probabilistic damage assessment accounts for **uncertainties** in three key areas: **the fire model, 
+    the thermal response model, and the structural response model**. To generate the **fragility points** $P(DS=DS_i|q_m)$, 
     fire-thermo-mechanical analyses are conducted by the non-linear analysis of the building.  
     
     The probability of the composite floor reaching a specific 
     damage state $DS_i$ is assessed for a given fire load $q_m$, and is calculated by Eq. (1). Once the fragility points 
-    at different fire loads are generated, the fragility curves are fitted using a two-parameter lognormal distribution 
+    at different fire loads are generated, the **fragility curves** are fitted using a two-parameter lognormal distribution 
     function, as outlined in Eq. (2). The illustration of the fragility curves is shown in Figure 1.  
     ''', unsafe_allow_html=True)
 
@@ -363,6 +363,7 @@ with st.expander('General Description:', expanded=False):
     $$
     <div align='right'><b>Eq.1</b> 
     ''', unsafe_allow_html=True)
+
     st.markdown(r'''
     $$
     \begin{align*}
@@ -379,13 +380,19 @@ with st.expander('General Description:', expanded=False):
     <div align='right'><b>Eq.2</b> 
     ''', unsafe_allow_html=True)
 
+    st.markdown('''
+    where $\emptyset$ is the standardized normal distribution function, $MinMaxScaler(q)$ 
+    normalizes the fire load to range [0, 1], $erf$ is the Gauss error function, $\mu$ and $\sigma$ 
+    are two parameters characterizing the fragility functions and are determined by 
+    maximizing the best fit with the data from the analysis.
+    ''')
+
     fig_damage_assessment = "images/sample of fragility curve.jpg"
     col1, col2, col3 = st.columns([1, 5, 1])
     with col2:
         st.image(fig_damage_assessment,
-                 caption='  Figure 1: Sample of the fragility curves'                ,
+                 caption='  Figure 1: Sample of the fragility curves',
                  use_column_width=None)
-
 
     st.markdown('''
     From these curves, 
@@ -395,6 +402,134 @@ with st.expander('General Description:', expanded=False):
     insights for risk assessment and structural design considerations.
     ''', unsafe_allow_html=True)
 
+with st.expander('Built-in Fragility curves:', expanded=False):
+    st.markdown(''' A series of built-in fragility curves is developed based on the recent [NIST full scale fire test on the 
+    composite floor system](https://www.nist.gov/el/fire-research-division-73300/national-fire-research-laboratory-73306/steel-concrete-composite). 
+    The the composite floor used for developing the fragility curves is the same as the NIST prototypes, with size of $6.14 m X 9.1 m$ and 
+    floor gravity load of $5.2kPa$.
+    The numerical models were calibrated on recent NIST full-scale fire test prototypes, with the test results validating the model.[Check recent paper
+    for details]. The validated models are then used for constructing the fragility curves of various designs.  
+    
+    Two design methods are considered: **Prescriptive design** and **Performance-based design**. 
+    In the prescriptive design, all the **beams are protected**, while the **central beam is unprotected** in the performance-based design.
+    ''', unsafe_allow_html=True)
+
+    tab1, tab2, tab3 = st.tabs(["**Probabilistic parameter**","**Definition of damage state**", "**Index for the built-in fragility curves**"])
+
+    with tab1:
+        st.markdown(r'''
+        * In **fire model**: opening factor is introduced as a random parameter. [Check ref. for detail] 
+        * In **thermal model**: The variability of thermal conductivity $k_i$, 
+        specific heat $c_i$, and density $\rho_i$ of SFRM is modeled probabilistically. Detailed equation can check
+        paper by [Elhami Khorasani et al.](https://ascelibrary.org/doi/full/10.1061/%28ASCE%29ST.1943-541X.000128) 
+        * In **mechanical model**: The randomness of the reduction factor is captured using 
+        the random variable $\varepsilon$ that follows the standard normal distribution function. 
+        [Elhami Khorasani et al.](https://ascelibrary.org/doi/full/10.1061/%28ASCE%29ST.1943-541X.000128) 
+        ''')
+        distribution_of_variables = "images/distribution_of_variables.jpg"
+
+        st.image(distribution_of_variables,
+                 caption='Figure 1: Distribution of random variable for: (a) Opening factor, (b) '
+                         'Thermal conductivity of SFRM, (c) Specific heat of SFRM, (d) Density of SFRM, and (e) Yield strength of steel.',
+                 use_column_width=None)
+
+    with tab2:
+        damage_state_definition = "images/damage_state_definition.jpg"
+        st.markdown(r'''
+        * **Damage states one to three** represent mild to moderate damage the composite floor would reach under fire events. Damage 
+        state three is the maximum damage the floor system can sustain without experiencing integrity failure. 
+        * **Damage state four** is proposed to denote the **integrity failure** of the floor system. Here, once the steel failure is observed in the 
+        simulation or the simulation stops due to large deflection, the damage state of that realization is designated as 
+        damage state four. 
+        
+        The assumption of **linking rebar failure with integrity failure** is based on test observation. 
+        In NIST test #1, the concrete crack above the central beam developed fast since the ruptured rebar cannot transfer 
+        the load across the crack, leading to integrity failure. Flame leakage was observed at the slab top, and similar 
+        observation was found in test #3 at 132 mins of exposure, indicating the potential of vertical fire spread. Thus, 
+        steel rebar failure is an indicator of crack concentration and may result in flame leakage and integrity failure.
+        ''')
+        st.image(damage_state_definition,
+                 caption='Table 1: Definition of different damage states of the composite floor system.',
+                 use_column_width=None)
+
+    with tab3:
+        Fragility_curve_t1_t3 = "images/Fragility curve-t1-t3.jpg"
+        Fragility_curve_C124 = "images/fragility curve 124.jpg"
+        Fragility_curve_C356 = "images/fragility curve 356.jpg"
+        aspect_ratio_C378 = "images/aspect ratio illustration.jpg"
+        Fragility_curve_C378 = "images/fragility curve 378.jpg"
+        BC_C3910 = "images/BC illustration.jpg"
+        Fragility_curve_C3910 = "images/fragility curve 3910.jpg"
+
+
+        st.markdown('''
+        The composite floor is designed with 2-hour fire rating. Thickness of SFRM is the same as NIST test for all the following curves.
+        (11/16 in for primary beams and girder, 7/16 for protected center beam.)
+        * Curve 1: The same design as NIST test #1 prototype, **with protected central beam** and rebar area of 60 mm<sup>2</sup>/m. 
+       The rebar area of 60 mm<sup>2</sup>/m is equivalent to **94 mm<sup>2</sup>/m** rebar with yield stress 480 Mpa. 
+       **(Hereafter, all the rebar area are defined based on S480)**
+       * Curve 2: The same design as NIST test #2 prototype, **with protected central beam** and rebar area of **230 mm<sup>2</sup>/m**. 
+       * Curve 3: The same design as NIST test #3 prototype, **with unprotected central beam** and rebar area of **230 mm<sup>2</sup>/m**. 
+        ''', unsafe_allow_html=True)
+
+        st.image(Fragility_curve_t1_t3,
+                 caption='Figure 2: Fragility curves for three designs of the composite floors tested by the NIST.',
+                 use_column_width=None)
+
+        st.markdown('''
+        * Curve 4: The same design as NIST test #1 prototype, **with protected central beam** and rebar area of **157 mm<sup>2</sup>/m**. 
+        The following figure (figure 3) shows the **Curve 1, Curve 2 and Curve 4** together to show the effects of rebar area on **prescriptive
+        design.** The only variable is the rebar area, and all the other design parameters are set the same.
+        ''', unsafe_allow_html=True)
+
+        st.image(Fragility_curve_C124,
+                 caption='Figure 3: Fragility curves for prescriptive design with different rebar areas.',
+                 use_column_width=True)
+
+        st.markdown('''
+        * Curve 5: The same design as NIST test #3 prototype, **with unprotected central beam** and rebar area of **142 mm<sup>2</sup>/m**. 
+        * Curve 6: The same design as NIST test #3 prototype, **with unprotected central beam** and rebar area of **345 mm<sup>2</sup>/m**. 
+        ''', unsafe_allow_html=True)
+
+        st.image(Fragility_curve_C356,
+                 caption='Figure 4: Fragility curves for PBD design with different rebar areas.',
+                 use_column_width=True)
+
+        st.markdown('''
+        Curve 7 and 8 have different **aspect ratios** with respect to curve 3. The **sizes of beam and 
+        girder have been adjusted** to ensure the same load ratio as Test #3 when a constant 5.2 kPa load is applied. 
+        Furthermore, the thicknesses of the SFRM on the primary beam and girder have been adjusted based on the equation mentioned previously.
+        ''', unsafe_allow_html=True)
+
+        st.image(aspect_ratio_C378,
+                 caption='Figure 5: Illustration of different aspect ratios considered for the slab panel.',
+                 use_column_width=True)
+
+        st.markdown('''
+        * Curve 7: The aspect ratio is changed to 1:1, **with unprotected central beam** and rebar area of **230 mm<sup>2</sup>/m**. 
+        * Curve 8: The aspect ratio is changed to 1:3, **with unprotected central beam** and rebar area of **230 mm<sup>2</sup>/m**. 
+        ''', unsafe_allow_html=True)
+
+        st.image(Fragility_curve_C378,
+                 caption='Figure 6: Illustration of different aspect ratios considered for the slab panel.',
+                 use_column_width=True)
+
+        st.markdown('''
+        Curve 9 and 10 have different **boundary conditions** with respect to curve 3. 
+        ''', unsafe_allow_html=True)
+
+        st.image(BC_C3910,
+                 caption='Figure 7: Illustration of different boundary conditions considered for the slab panel.',
+                 use_column_width=True)
+        st.markdown('''
+        * Curve 9: simply supported slab (BC1), allowing thermal expansion of structural members, 
+        **with unprotected central beam** and rebar area of **230 mm<sup>2</sup>/m**. 
+        * Curve 10: restricts thermal expansions in both x and y directions (BC3) , **with unprotected central beam** and rebar area of **230 mm<sup>2</sup>/m**. 
+        ''', unsafe_allow_html=True)
+
+        st.image(Fragility_curve_C3910,
+                 caption='Figure 8: Illustration of different aspect ratios considered for the slab panel.',
+                 use_column_width=True)
 
 
 st.markdown('### 3. Indirect damage estimation')
