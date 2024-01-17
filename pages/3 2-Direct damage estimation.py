@@ -45,7 +45,6 @@ with st.sidebar:
 
     construction_cost_df = st.session_state.construction_cost_df
     CI = construction_cost_df['Floor'][0] + construction_cost_df['Column'][0]
-    CI = construction_cost_df['Floor'][0] + construction_cost_df['Column'][0]
 
     damage_state_cost_value = st.text_area("Enter your damage state value (comma-separated):")
     # Process the input and convert it into a NumPy array
