@@ -20,14 +20,15 @@ def show_Calculation():
 def show_Construction_cost_estimation():
     Construction_cost_estimation.show()
 
+def show_Maintenance_estimation():
+    Maintenance_estimation.show()
+
 def show_Direct_damage_estimation():
     Direct_damage_estimation.show()
 
 def show_Indirect_damage_estimation():
     Indirect_damage_estimation.show()
 
-def show_Maintenance_estimation():
-    Maintenance_estimation.show()
 
 def show_Co_benefit_estimation():
     Co_benefit_estimation.show()
@@ -42,17 +43,17 @@ with st.sidebar:
         set_page("Construction_cost_estimation")
         Current_page="Current page: 1.Construction cost estimation"
         st.session_state.Current_page = Current_page
-    if st.button("2.Direct damage estimation"):
+    if st.button("2.Maintenance estimation"):
+        set_page("Maintenance_estimation")
+        Current_page = "Current page: 4.Maintenance estimation"
+        st.session_state.Current_page = Current_page
+    if st.button("3.Direct damage estimation"):
         set_page("Direct_damage_estimation")
         Current_page="Current page: 2.Direct damage estimation"
         st.session_state.Current_page = Current_page
-    if st.button("3.Indirect damage estimation"):
+    if st.button("4.Indirect damage estimation"):
         set_page("Indirect_damage_estimation")
         Current_page ="Current page: 3.Indirect damage estimation"
-        st.session_state.Current_page = Current_page
-    if st.button("4.Maintenance estimation"):
-        set_page("Maintenance_estimation")
-        Current_page="Current page: 4.Maintenance estimation"
         st.session_state.Current_page = Current_page
     if st.button("5.Co benefit estimation"):
         set_page("Co_benefit_estimation")

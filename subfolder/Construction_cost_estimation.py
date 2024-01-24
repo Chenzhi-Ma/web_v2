@@ -7,7 +7,7 @@ import pickle
 from io import StringIO
 
 import json
-from functions import column_cost_calculation, floor_system_cost,fire_service_cost,calculate_fireprotection_cost
+from functions import column_cost_calculation, floor_system_cost,fire_service_cost,calculate_fireprotection_cost,update_session_state
 import matplotlib.pyplot as plt
 def show():
     st.title('Construction cost estimation')
@@ -45,23 +45,22 @@ def show():
         # define new vlue in the database
 
     def Modify_database():
-        from functions import column_cost_calculation, floor_system_cost,fire_service_cost
-        import matplotlib.pyplot as plt
+
         st.header("Economic impact of performance-based structural fire design")
 
-
-        with st.sidebar:
+        with (st.sidebar):
             st.markdown("## **User Input Parameters**")
             option_analysis_type = st.selectbox(
                 "Analysis type",
-                ( 'Load session variables','Start a new analysis'),
+                ('Load session variables','Start a new analysis'),
             )
             if option_analysis_type=='Start a new analysis':
-                keys_to_keep = ['path_for_save','shown_page','Current_page']
-                # Delete all session state variables except for the specified key(s)
-                for key in list(st.session_state.keys()):
-                    if key not in keys_to_keep:
-                        del st.session_state[key]
+                if st.button('clear all saved session state'):
+                    keys_to_keep = ['path_for_save','shown_page','Current_page']
+                    # Delete all session state variables except for the specified key(s)
+                    for key in list(st.session_state.keys()):
+                        if key not in keys_to_keep:
+                            del st.session_state[key]
 
             st.session_state.option_analysis_type=option_analysis_type
             if option_analysis_type !='Start a new analysis':
@@ -98,8 +97,8 @@ def show():
                     BI_saved=st.session_state.BI
                 else:
                     BI_saved=1
+            BI = st.number_input("Input Building index (start from 1)",value=BI_saved, step=1)
 
-            BI = st.number_input("Input Building index (start from 1)", value=BI_saved, step=1, key=3)
             st.session_state.BI = BI  # Attribute API
             # Set up the basic non-editable building parameter
             building_index = BI
@@ -119,6 +118,7 @@ def show():
 
             # default building parameter
             total_floor_area_inp = building_information_ori[building_index - 1][1]  # sq.ft
+
             story_height_inp = 10  # ft
             bay_total_load_default = [0.115, 0.115, 0.080, 0.08, 0.08, 0.08, 0.08, 0.08]
             bayload_inp = bay_total_load_default[Building_type - 1]  # kips
@@ -130,17 +130,18 @@ def show():
 
             if option_analysis_type == 'Start a new analysis':
                 Building_para_modi_saved = Building_para_modi
-            elif 'building_parameter_original' in st.session_state:
-                building_parameter_original_saved=st.session_state.building_parameter_original
-                Building_para_modi_saved=building_parameter_original_saved.at[0, 'Modify default building parameter']
-                story_height_inp=building_parameter_original_saved.at[0, 'Story height']
-                total_floor_area_inp=building_parameter_original_saved.at[0,  'Total area']
-                bayload_inp=building_parameter_original_saved.at[0,    'Bay load']
-                total_story = building_parameter_original_saved.at[0,  'Building stories']
-                baysize1_inp = building_parameter_original_saved.at[0, 'Bay size1']
-                baysize2_inp = building_parameter_original_saved.at[0, 'Bay size2']
-            else:
-                Building_para_modi_saved = Building_para_modi
+            elif option_analysis_type == 'Load session variables':
+                if 'building_parameter_original' in st.session_state:
+                    building_parameter_original_saved=st.session_state.building_parameter_original
+                    Building_para_modi_saved=building_parameter_original_saved.at[0, 'Modify default building parameter']
+                    story_height_inp=building_parameter_original_saved.at[0, 'Story height']
+                    total_floor_area_inp=building_parameter_original_saved.at[0,  'Total area']
+                    bayload_inp=building_parameter_original_saved.at[0,    'Bay load']
+                    total_story = building_parameter_original_saved.at[0,  'Building stories']
+                    baysize1_inp = building_parameter_original_saved.at[0, 'Bay size1']
+                    baysize2_inp = building_parameter_original_saved.at[0, 'Bay size2']
+                else:
+                    Building_para_modi_saved = Building_para_modi
 
             Building_para_modi=Building_para_modi_saved
 
@@ -158,7 +159,7 @@ def show():
 
                 col1, col2 = st.columns(2)
                 with col1:
-                    bayload_inp = st.number_input("bay total load (lbf)",value=int(bayload_inp*1000),step=1 )/1000
+                    bayload_inp = st.number_input("bay total load (lbf)",value=int(bayload_inp*1000),step=1)/1000
                 with col2:
                     total_story = st.number_input("Building storys",value=int(total_story), step=1)
 
@@ -320,6 +321,7 @@ def show():
                 fire_protection_percentage_column_inp_alt = fire_parameter_alt_saved.at[0, 'Column fire protection percentage alt.']
             else:
                 alter_design_saved = alter_design
+
             alter_design=alter_design_saved
 
             if alter_design:
@@ -1006,6 +1008,7 @@ def show():
                 'Alarm': [0],
                 'Ceiling': [0],
             }
+
             construction_cost_df = pd.DataFrame(data, index=[0, 1])
             st.session_state.construction_cost_df = construction_cost_df  # Attribute API
             data_array=[member_price,member_labor,thickness_record]

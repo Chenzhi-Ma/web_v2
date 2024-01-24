@@ -16,17 +16,31 @@ def show():
 
     with st.sidebar:
         st.markdown("## **User Input Parameter**")
+        study_year_saved=50
+        maintenance_cost_annually_percentage_saved=3.00
+        discount_rate_saved=3.00
+        maintenance_cost_annually_percentage_saved_alt=3.00
 
-        direct_damage_loss=st.session_state.direct_damage_loss   # Attribute API
-        study_year=direct_damage_loss["Study year"]
+        if 'maintenance_input_original' in st.session_state:
+            maintenance_input_original = st.session_state.maintenance_input_original
+            maintenance_cost_annually_percentage_saved=maintenance_input_original.at[0, 'Percentage as initial construction cost']
+            discount_rate_saved=maintenance_input_original.at[0, 'Input the discount rate']
+            study_year_saved=maintenance_input_original.at[0, 'Study year']
 
+        study_year = st.number_input("Input study year of the building", value=study_year_saved)
         maintenance_cost_method = st.selectbox(
             'How would you like to define maintenance cost',
             ('Constant percentage of total construction cost', 'input own value with respected to year'))
 
+
+
+        if 'maintenance_input_alt' in st.session_state:
+            maintenance_input_alt = st.session_state.maintenance_input_alt
+            maintenance_cost_annually_percentage_saved_alt=maintenance_input_alt.at[0, 'Percentage as initial construction cost for alt.']
+
         if maintenance_cost_method == 'Constant percentage of total construction cost':
-            maintenance_cost_annually_percentage = st.number_input("Input percentage as initial construction cost",value=3.00)/100
-            discount_rate = st.number_input("Input the discount rate",value=3.00)/100
+            maintenance_cost_annually_percentage = st.number_input("Input percentage as initial construction cost",value=maintenance_cost_annually_percentage_saved)/100
+            discount_rate = st.number_input("Input the discount rate",value=discount_rate_saved)/100
             #study_year=st.number_input("Input the study year (building lifetime)",value=50, step=1)
 
 
@@ -45,23 +59,31 @@ def show():
 
         if alter_design:
             if maintenance_cost_method == 'Constant percentage of total construction cost':
-                maintenance_cost_annually_percentage_alt = st.number_input("Input percentage as initial construction cost (alt.)",value=3.00)/100
+                maintenance_cost_annually_percentage_alt = st.number_input("Input percentage as initial construction cost (alt.)",
+                                                                           value=maintenance_cost_annually_percentage_saved_alt)/100
             if maintenance_cost_method == 'input own value with respected to year':
                 uploaded_file_maintenance = st.file_uploader(
                     "Choose a file with maintenance cost and year (value in future)")
 
 
-
-
     with st.container():
         st.subheader('Results')
         st.write("---")
+
+        data = {
+            'Percentage as initial construction cost': [maintenance_cost_annually_percentage*100],
+            'Input the discount rate': [discount_rate*100],
+            'Study year': [study_year],
+        }
+        maintenance_input_original = pd.DataFrame(data, index=[0, 1])
+        st.session_state.maintenance_input_original = maintenance_input_original  # Attribute API
+
         #st.write("bar chart, maintenance_cost with respected to year")
         construction_cost_df = st.session_state.construction_cost_df
         CI = construction_cost_df['Floor'][0] + construction_cost_df['Column'][0]
         maintenance_cost_total=CI*maintenance_cost_annually_percentage/discount_rate*(1-np.exp(-discount_rate*study_year))
         data = {
-            'Maintenance cost': [int(maintenance_cost_total.iloc[0])],
+            'Maintenance cost': [int(maintenance_cost_total)],
         }
         Maintenance_cost_df = pd.DataFrame(data)
 
@@ -81,11 +103,18 @@ def show():
                 maintenance_cost_total_alt = CI_alt * maintenance_cost_annually_percentage_alt/ discount_rate * (
                             1 - np.exp(-discount_rate * study_year))
                 data = {
-                    'Maintenance cost': [int(maintenance_cost_total_alt.iloc[0])],
+                    'Maintenance cost': [int(maintenance_cost_total_alt)],
                 }
                 maintenance_cost_total_alt = pd.DataFrame(data)
                 st.dataframe(maintenance_cost_total_alt, use_container_width=True, hide_index=True)
                 st.session_state.maintenance_cost_total_alt = maintenance_cost_total_alt  # Attribute API
+
+                data = {
+                    'Percentage as initial construction cost for alt.': [maintenance_cost_annually_percentage_alt*100],
+                }
+                maintenance_input_alt = pd.DataFrame(data, index=[0, 1])
+                st.session_state.maintenance_input_alt = maintenance_input_alt  # Attribute API
+
 
 
 

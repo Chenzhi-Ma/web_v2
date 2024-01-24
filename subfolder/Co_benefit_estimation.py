@@ -24,8 +24,8 @@ def show():
         rent_loss = 0
         rent_loss_alt = 0
         if rent_loss_selection:
-            building_basic_information = st.session_state.building_basic_information
-            Affect_area = building_basic_information['Total area'][0]
+            building_parameter_original = st.session_state.building_parameter_original
+            Affect_area = building_parameter_original['Total area'][0]
 
             # labor_hour_unit = st.number_input("Input labor hour needed for sq.ft fire protection")
             Unit_rent_loss = st.number_input("Input rent loss per month per sq.ft", value=0.005 * 24 * 30)

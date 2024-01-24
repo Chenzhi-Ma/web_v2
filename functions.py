@@ -1,6 +1,7 @@
 import numpy as np
 from io import StringIO
 import pandas as pd
+import streamlit as st
 # Define functions for searching data
 def FindIndexfromList(List, Target):
     # This function find a target from a list and return the index of the target's position
@@ -287,3 +288,5 @@ def convert_state_from_json(serialized_state):
             original_state[key] = value
     return original_state
 
+def update_session_state(key, value):
+    st.session_state[key] = value
