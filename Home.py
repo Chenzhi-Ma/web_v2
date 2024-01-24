@@ -16,36 +16,12 @@ st.write("# Welcome to PBSFD project! 👋")
 st.markdown('### **Enter the path for saving the files**')
 # User input for the save path
 
-if st.checkbox("Customized download path"):
-    save_path = st.text_input('Path:')
-else:
-    save_path=''
-st.session_state.path_for_save = save_path     # Attribute API
-
-st.markdown(save_path)
 if st.button(f"Click to show the saved path"):
-    st.markdown(st.session_state.path_for_save)
+    st.markdown('**All the downloaded files would be stored at the default path you specified in the browser**')
 
 # upload images
 
 # Convert DataFrame to CSV string
-
-# Example DataFrame
-df = pd.DataFrame({
-    'Column1': [1, 2, 3],
-    'Column2': ['A', 'B', 'C']
-})
-
-# Convert DataFrame to CSV string
-csv = df.to_csv(index=False)
-
-# Create a download button
-st.download_button(
-    label="Download CSV",
-    data=csv,
-    file_name='dataframe.csv',
-    mime='text/csv',
-)
 
 # Display the image based on the file path
 
