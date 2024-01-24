@@ -2,6 +2,8 @@
 # Import the necessary packages
 
 import streamlit as st
+import pandas as pd
+from io import StringIO
 
 st.set_page_config(
     page_title="Hello",
@@ -26,7 +28,24 @@ if st.button(f"Click to show the saved path"):
 
 # upload images
 
+# Convert DataFrame to CSV string
 
+# Example DataFrame
+df = pd.DataFrame({
+    'Column1': [1, 2, 3],
+    'Column2': ['A', 'B', 'C']
+})
+
+# Convert DataFrame to CSV string
+csv = df.to_csv(index=False)
+
+# Create a download button
+st.download_button(
+    label="Download CSV",
+    data=csv,
+    file_name='dataframe.csv',
+    mime='text/csv',
+)
 
 # Display the image based on the file path
 

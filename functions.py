@@ -258,4 +258,31 @@ def calculate_fireprotection_cost(thickness,para_fireprotection,perimeter,materi
 
     return price
 
+def convert_state_for_json(state):
+    serializable_state = {}
+    for key, value in state.items():
+        if isinstance(value, pd.DataFrame):
+            # Convert DataFrame to a JSON string
+            serializable_state[key] = value.to_json(orient='split')
+        elif isinstance(value, np.bool_):
+            # Convert NumPy boolean to Python boolean
+            serializable_state[key] = bool(value)
+        else:
+            serializable_state[key] = value
+    return serializable_state
+
+def convert_state_from_json(serialized_state):
+    original_state = {}
+    for key, value in serialized_state.items():
+        if isinstance(value, str):
+            try:
+                # Use StringIO to wrap the JSON string
+                str_io = StringIO(value)
+                original_state[key] = pd.read_json(str_io, orient='split')
+            except ValueError:
+                # If the conversion fails, keep the value as a string
+                original_state[key] = value
+        else:
+            original_state[key] = value
+    return original_state
 
