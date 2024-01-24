@@ -1,5 +1,6 @@
 import numpy as np
-
+from io import StringIO
+import pandas as pd
 # Define functions for searching data
 def FindIndexfromList(List, Target):
     # This function find a target from a list and return the index of the target's position
