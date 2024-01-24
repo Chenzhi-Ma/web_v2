@@ -11,7 +11,8 @@ def show():
     ---
     ''')
     st.markdown('''
-    ## Welcome! This page provides links save and restore the input parameters(session state).
+    ## Welcome!  
+    ### This page provides links save and restore current inputs and outputs(session state).
     ''')
 
     st.markdown('''
@@ -35,7 +36,7 @@ def show():
     ''')
     # Button to trigger loading all session state variables
 
-    uploaded_file=st.file_uploader("Choose a json file that stores all the inputs")
+    uploaded_file=st.file_uploader("Choose a json file that stores all the current inputs and outputs")
 
     if uploaded_file is not None:
         try:
@@ -47,10 +48,26 @@ def show():
 
             # Display all session state variables in a table
             st.markdown("### Session State Variables")
-            session_state_table = pd.DataFrame({
-                'Key': st.session_state.keys(),
-                'Value': [str(v) for v in st.session_state.values()]  # Convert values to string for display
-            })
-            st.table(session_state_table)
+
+            session_state_items = [(key, value) if not isinstance(value, pd.DataFrame)
+                                   else (key, 'DataFrame with many columns')
+                                   for key, value in st.session_state.items()]
+
+            session_state_df = pd.DataFrame(session_state_items, columns=['Key', 'Value'])
+
+            # Display the session state in an interactive table
+            st.dataframe(session_state_df)
+
+            # Optionally, display the DataFrame with many columns separately with a header
+            if 'large_dataframe' in st.session_state:
+                st.write("Large DataFrame:")
+                st.dataframe(st.session_state['large_dataframe'])
+
+            st.markdown("### Session states with many columns is shown below:")
+            for key, value in st.session_state.items():
+                if isinstance(value, pd.DataFrame):
+                    st.write(f" **{key}**")
+                    st.dataframe(value)  # Display DataFrame with horizontal and vertical scrolling
+
         except Exception as e:
             st.error(f"Error loading session state: {e}")
