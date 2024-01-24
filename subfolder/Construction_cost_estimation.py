@@ -631,18 +631,18 @@ def show():
 
             Download = st.checkbox('Do you want to download the detailed member cost')
             if Download:
-                cost_save_tocsv = construction_cost_df_updated.to_csv(index=False)
-                cost_save_tocsv_string_io = StringIO(cost_save_tocsv)
-                # Create a download button
-                st.download_button(
-                    label="Download CSV",
-                    data=cost_save_tocsv_string_io,
-                    file_name='dataframe.csv',
-                    mime='text/csv',
-                )
-                # savepath=st.session_state.path_for_save+'user_updated_costdetail.csv'
-                # construction_cost_df_updated.to_csv(savepath, index=False)
-                st.success(f"Data successfully saved")
+                # cost_save_tocsv = construction_cost_df_updated.to_csv(index=False)
+                # cost_save_tocsv_string_io = StringIO(cost_save_tocsv)
+                # # Create a download button
+                # st.download_button(
+                #     label="Download CSV",
+                #     data=cost_save_tocsv_string_io,
+                #     file_name='dataframe.csv',
+                #     mime='text/csv',
+                # )
+                savepath=st.session_state.path_for_save+'user_updated_costdetail.csv'
+                construction_cost_df_updated.to_csv(savepath, index=False)
+                st.success(f"Data successfully saved to {savepath}")
 
     def User_defined_building():
         import pandas as pd
@@ -1022,6 +1022,7 @@ def show():
             if Download:
                 savepath=st.session_state.path_for_save+'userinput_costdetail.csv'
                 construction_cost_detail.to_csv(savepath, index=False)
+                st.success(f"Data succesfully saved to {savepath}")
 
 
     page_names_to_funcs = {

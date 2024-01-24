@@ -36,14 +36,8 @@ def show():
         try:
             with open(file_path, 'w') as file:
                 data = convert_state_for_json(st.session_state)
-                json_string = json.dump(data, file, indent=4)
-                st.download_button(
-                    label="Download inputs as JSON File",
-                    data=json_string,
-                    file_name="session_state.json",
-                    mime="application/json"
-                )
-            st.success(f"Session state successfully saved")
+                json.dump(data, file, indent=4)
+            st.success(f"Session state saved to {file_path}")
         except Exception as e:
             st.error(f"Error saving session state: {e}")
 
