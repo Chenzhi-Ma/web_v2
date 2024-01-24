@@ -4,6 +4,8 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import pickle
+from io import StringIO
+
 import json
 from functions import column_cost_calculation, floor_system_cost,fire_service_cost,calculate_fireprotection_cost
 import matplotlib.pyplot as plt
@@ -629,9 +631,18 @@ def show():
 
             Download = st.checkbox('Do you want to download the detailed member cost')
             if Download:
-                savepath=st.session_state.path_for_save+'user_updated_costdetail.csv'
-                construction_cost_df_updated.to_csv(savepath, index=False)
-                st.success(f"Data saved to {savepath}")
+                cost_save_tocsv = construction_cost_df_updated.to_csv(index=False)
+                cost_save_tocsv_string_io = StringIO(cost_save_tocsv)
+                # Create a download button
+                st.download_button(
+                    label="Download CSV",
+                    data=cost_save_tocsv_string_io,
+                    file_name='dataframe.csv',
+                    mime='text/csv',
+                )
+                # savepath=st.session_state.path_for_save+'user_updated_costdetail.csv'
+                # construction_cost_df_updated.to_csv(savepath, index=False)
+                st.success(f"Data successfully saved")
 
     def User_defined_building():
         import pandas as pd
