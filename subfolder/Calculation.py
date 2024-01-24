@@ -32,7 +32,7 @@ def show():
         return serializable_state
 
     if store_inputs:
-        file_path = st.session_state.path_for_save + '\session_state.json'
+        file_path = st.session_state.path_for_save + 'session_state.json'
         try:
             with open(file_path, 'w') as file:
                 data = convert_state_for_json(st.session_state)

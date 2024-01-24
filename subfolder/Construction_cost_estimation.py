@@ -631,6 +631,7 @@ def show():
             if Download:
                 savepath=st.session_state.path_for_save+'user_updated_costdetail.csv'
                 construction_cost_df_updated.to_csv(savepath, index=False)
+                st.success(f"Data saved to {savepath}")
 
     def User_defined_building():
         import pandas as pd
