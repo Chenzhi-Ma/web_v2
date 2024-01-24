@@ -4,11 +4,11 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import pickle
+import json
 from functions import column_cost_calculation, floor_system_cost,fire_service_cost,calculate_fireprotection_cost
 import matplotlib.pyplot as plt
 def show():
     st.title('Construction cost estimation')
-
 
     with open('database_ori_mat.pkl', 'rb') as f:
         database_ori_mat = pickle.load(f)
@@ -50,10 +50,55 @@ def show():
 
         with st.sidebar:
             st.markdown("## **User Input Parameters**")
+            option_analysis_type = st.selectbox(
+                "Analysis type",
+                ( 'Load session variables','Start a new analysis'),
+            )
+            if option_analysis_type=='Start a new analysis':
+                keys_to_keep = ['path_for_save','shown_page','Current_page']
+                # Delete all session state variables except for the specified key(s)
+                for key in list(st.session_state.keys()):
+                    if key not in keys_to_keep:
+                        del st.session_state[key]
 
+            st.session_state.option_analysis_type=option_analysis_type
+            if option_analysis_type !='Start a new analysis':
+                key_to_clear = 'building_parameter_original'
+                if st.button(f"Clear stored building design parameter from Session State"):
+                    if key_to_clear in st.session_state:
+                        del st.session_state[key_to_clear]
+                        st.write(f"'{key_to_clear}' has been cleared from session state.")
+                    else:
+                        st.write(f"'{key_to_clear}' is not in session state.")
+
+                key_to_clear = 'fire_parameter_original'
+                if st.button(f"Clear stored fire design parameter from Session State"):
+                    if key_to_clear in st.session_state:
+                        del st.session_state[key_to_clear]
+                        st.write(f"'{key_to_clear}' has been cleared from session state.")
+                    else:
+                        st.write(f"'{key_to_clear}' is not in session state.")
+
+                key_to_clear = 'fire_parameter_alt'
+                if st.button(f"Clear stored fire design parameter of alternative design from Session State"):
+                    if key_to_clear in st.session_state:
+                        del st.session_state[key_to_clear]
+                        st.write(f"'{key_to_clear}' has been cleared from session state.")
+                    else:
+                        st.write(f"'{key_to_clear}' is not in session state.")
+
+            st.markdown("---")
             # Set up the input for Column Type selected by users
+            if option_analysis_type == 'Start a new analysis':
+                BI_saved = 1
+            else:
+                if 'BI' in st.session_state:
+                    BI_saved=st.session_state.BI
+                else:
+                    BI_saved=1
 
-            BI = st.number_input("Input Building index (start from 1)", value=1, step=1, key=3)
+            BI = st.number_input("Input Building index (start from 1)", value=BI_saved, step=1, key=3)
+            st.session_state.BI = BI  # Attribute API
             # Set up the basic non-editable building parameter
             building_index = BI
             Building_type = int(building_information_ori[building_index - 1][8])
@@ -80,10 +125,27 @@ def show():
 
             # Set up the inputs for Material Properties
             Building_para_modi = st.checkbox('Modify default building parameter')
+
+            if option_analysis_type == 'Start a new analysis':
+                Building_para_modi_saved = Building_para_modi
+            elif 'building_parameter_original' in st.session_state:
+                building_parameter_original_saved=st.session_state.building_parameter_original
+                Building_para_modi_saved=building_parameter_original_saved.at[0, 'Modify default building parameter']
+                story_height_inp=building_parameter_original_saved.at[0, 'Story height']
+                total_floor_area_inp=building_parameter_original_saved.at[0,  'Total area']
+                bayload_inp=building_parameter_original_saved.at[0,    'Bay load']
+                total_story = building_parameter_original_saved.at[0,  'Building stories']
+                baysize1_inp = building_parameter_original_saved.at[0, 'Bay size1']
+                baysize2_inp = building_parameter_original_saved.at[0, 'Bay size2']
+            else:
+                Building_para_modi_saved = Building_para_modi
+
+            Building_para_modi=Building_para_modi_saved
+
             if Building_para_modi:
                 col1,col2 = st.columns(2)
                 with col1:
-                    story_height_inp = st.number_input("story height",value=10, step=1)
+                    story_height_inp = st.number_input("story height",value=story_height_inp, step=1)
                 with col2:
                     total_floor_area_inp = st.number_input("total floor area (sq.ft)",value=total_floor_area_inp)
 
@@ -96,7 +158,7 @@ def show():
                 with col1:
                     bayload_inp = st.number_input("bay total load (lbf)",value=int(bayload_inp*1000),step=1 )/1000
                 with col2:
-                    total_story = st.number_input("Building storys",value=int(low_limit_story), step=1)
+                    total_story = st.number_input("Building storys",value=int(total_story), step=1)
 
                 if total_story<low_limit_story or total_story>up_limit_story:
                     st.write("Warning: ")
@@ -105,12 +167,10 @@ def show():
 
                 col1, col2 = st.columns(2)
                 with col1:
-                    baysize1_inp = st.number_input("bay size x direction (ft)",value=25, step=1)
+                    baysize1_inp = st.number_input("bay size x direction (ft)",value=baysize1_inp, step=1)
                 with col2:
-                    baysize2_inp = st.number_input("bay size y direction (ft)",value=20, step=1)
+                    baysize2_inp = st.number_input("bay size y direction (ft)",value=baysize2_inp, step=1)
 
-
-            fire_design_para_modi = st.checkbox('Modify default fire design paramter')
 
             column_fire_rating_inp = int(building_information_ori[building_index - 1][12])
             Beam_fire_rating_inp = int(building_information_ori[building_index - 1][11])
@@ -120,23 +180,46 @@ def show():
             fire_protection_percentage_column_inp = 1
             fire_protection_percentage_beam_inp = 1
 
+
+            fire_design_para_modi = st.checkbox('Modify default fire design paramter')
+
+            if option_analysis_type == 'Start a new analysis':
+                fire_design_para_modi_saved = fire_design_para_modi
+            elif 'fire_parameter_original' in st.session_state:
+                fire_parameter_original_saved = st.session_state.fire_parameter_original
+                fire_design_para_modi_saved=fire_parameter_original_saved.at[0, 'Modify fire design parameter']
+                Beam_fire_rating_inp = fire_parameter_original_saved.at[0, 'Beam fire rating']
+                column_fire_rating_inp = fire_parameter_original_saved.at[0, 'Column fire rating']
+                fire_protection_material_beam_inp = fire_parameter_original_saved.at[0, 'Beam fire protection material']
+                fire_protection_material_column_inp = fire_parameter_original_saved.at[0, 'Column fire protection material']
+                fire_protection_percentage_beam_inp = fire_parameter_original_saved.at[0, 'Beam fire protection percentage']
+                fire_protection_percentage_column_inp = fire_parameter_original_saved.at[0, 'Column fire protection percentage']
+            else:
+                fire_design_para_modi_saved = fire_design_para_modi
+
+            fire_design_para_modi=fire_design_para_modi_saved
+
             if fire_design_para_modi:
 
                 col1,col2 = st.columns(2)
                 with col2:
-                    column_fire_rating_inp = st.number_input("Column fire rating (hr)",min_value=0,max_value=4,value=column_fire_rating_inp, step=1)
+                    column_fire_rating_inp = st.number_input("Column fire rating (hr)",min_value=0,max_value=4,value=int(column_fire_rating_inp), step=1)
                 with col1:
                     Beam_fire_rating_inp = st.number_input("Beam fire rating (hr)",min_value=0,max_value=4,value=Beam_fire_rating_inp, step=1)
                 col1, col2 = st.columns(2)
                 with col2:
-                    fire_protection_material_column_inp = st.number_input("Input column fire protection material",min_value=1,value=1, step=1)
+                    fire_protection_material_column_inp = st.number_input("Input column fire protection material",min_value=1,
+                                                                          value=fire_protection_material_column_inp, step=1)
                 with col1:
-                    fire_protection_material_beam_inp = st.number_input("Input beam fire protection material",min_value=1,value=1, step=1)
+                    fire_protection_material_beam_inp = st.number_input("Input beam fire protection material",min_value=1,
+                                                                        value=fire_protection_material_beam_inp, step=1)
                 col1, col2 = st.columns(2)
                 with col2:
-                    fire_protection_percentage_column_inp = st.number_input("Input column fire protection percentage",value=1.00,min_value=0.00, max_value=1.00,step=0.01)
+                    fire_protection_percentage_column_inp = st.number_input("Input column fire protection percentage",
+                                                                            value=float(fire_protection_percentage_column_inp),min_value=0.00, max_value=1.00,step=0.01)
                 with col1:
-                    fire_protection_percentage_beam_inp = st.number_input("Input beam fire protection percentage",value=1.00,min_value=0.00, max_value=1.00,step=0.01)
+                    fire_protection_percentage_beam_inp = st.number_input("Input beam fire protection percentage",
+                                                                          value=float(fire_protection_percentage_beam_inp),min_value=0.00, max_value=1.00,step=0.01)
 
             fire_cost_para_modi = st.checkbox('Modify default fire protection cost value')
 
@@ -200,7 +283,8 @@ def show():
 
             if floor_load_max>1000:
                 st.write ("Warning: ")
-                st.write ("The floor load is over the max column loading capacity (1000 kips), if want to continue, please use user-defined column cost and capacity data")
+                st.write ("The floor load is over the max column loading capacity (1000 kips), if want to continue, "
+                          "please use user-defined column cost and capacity data")
 
 
             Interpolation_agree = st.checkbox('Enable interpolation when the default building parameter is changed')
@@ -212,26 +296,52 @@ def show():
             else:
                 partition_cost, Sprinkler_cost, Fire_pump_cost, Alarm_cost, Ceiling_cost = [0,0,0,0,0]
             st.write("---")
-
             alter_design = st.checkbox('Do you want to specify fire design parameters for alternative design?')
 
-            if alter_design:
+            Beam_fire_rating_inp_alt = Beam_fire_rating_inp
+            column_fire_rating_inp_alt = column_fire_rating_inp
+            fire_protection_material_beam_inp_alt = fire_protection_material_beam_inp
+            fire_protection_material_column_inp_alt = fire_protection_material_column_inp
+            fire_protection_percentage_beam_inp_alt = fire_protection_percentage_beam_inp
+            fire_protection_percentage_column_inp_alt = fire_protection_percentage_column_inp
 
+            if option_analysis_type == 'Start a new analysis':
+                alter_design_saved = alter_design
+            elif 'fire_parameter_alt' in st.session_state:
+                fire_parameter_alt_saved = st.session_state.fire_parameter_alt
+                alter_design_saved=fire_parameter_alt_saved.at[0, 'active alternative design']
+                Beam_fire_rating_inp_alt = fire_parameter_alt_saved.at[0, 'Beam fire rating alt.']
+                column_fire_rating_inp_alt = fire_parameter_alt_saved.at[0, 'Column fire rating alt.']
+                fire_protection_material_beam_inp_alt = fire_parameter_alt_saved.at[0, 'Beam fire protection material alt.']
+                fire_protection_material_column_inp_alt = fire_parameter_alt_saved.at[0, 'Column fire protection material alt.']
+                fire_protection_percentage_beam_inp_alt = fire_parameter_alt_saved.at[0,  'Beam fire protection percentage alt.']
+                fire_protection_percentage_column_inp_alt = fire_parameter_alt_saved.at[0, 'Column fire protection percentage alt.']
+            else:
+                alter_design_saved = alter_design
+            alter_design=alter_design_saved
+
+            if alter_design:
                 col1,col2 = st.columns(2)
                 with col2:
-                    column_fire_rating_inp_alt = st.number_input("Column fire rating alt. (hr)",min_value=0,max_value=4,value=column_fire_rating_inp, step=1)
+                    column_fire_rating_inp_alt = st.number_input("Column fire rating alt. (hr)",min_value=0,max_value=4,
+                                                                 value=column_fire_rating_inp_alt, step=1)
                 with col1:
-                    Beam_fire_rating_inp_alt = st.number_input("Beam fire rating alt. (hr)",min_value=0,max_value=4,value=Beam_fire_rating_inp, step=1)
+                    Beam_fire_rating_inp_alt = st.number_input("Beam fire rating alt. (hr)",min_value=0,max_value=4,
+                                                               value=Beam_fire_rating_inp_alt, step=1)
                 col1, col2 = st.columns(2)
                 with col2:
-                    fire_protection_material_column_inp_alt = st.number_input("Input column fire protection material alt.",min_value=1,value=fire_protection_material_column_inp, step=1)
+                    fire_protection_material_column_inp_alt = st.number_input("Input column fire protection material alt.",min_value=1,
+                                                                              value=fire_protection_material_column_inp_alt, step=1)
                 with col1:
-                    fire_protection_material_beam_inp_alt = st.number_input("Input beam fire protection material alt.",min_value=1,value=fire_protection_material_beam_inp, step=1)
+                    fire_protection_material_beam_inp_alt = st.number_input("Input beam fire protection material alt.",min_value=1,
+                                                                            value=fire_protection_material_beam_inp_alt, step=1)
                 col1, col2 = st.columns(2)
                 with col2:
-                    fire_protection_percentage_column_inp_alt = st.number_input("Input column fire protection percentage alt.",value=float(fire_protection_percentage_column_inp),min_value=0.00, max_value=1.00,step=0.01)
+                    fire_protection_percentage_column_inp_alt = st.number_input("Input column fire protection percentage alt.",
+                                                                                value=float(fire_protection_percentage_column_inp_alt),min_value=0.00, max_value=1.00,step=0.01)
                 with col1:
-                    fire_protection_percentage_beam_inp_alt = st.number_input("Input beam fire protection percentage alt.",value=float(fire_protection_percentage_beam_inp),min_value=0.00, max_value=1.00,step=0.01)
+                    fire_protection_percentage_beam_inp_alt = st.number_input("Input beam fire protection percentage alt.",
+                                                                              value=float(fire_protection_percentage_beam_inp_alt),min_value=0.00, max_value=1.00,step=0.01)
 
                 row_indices_column = [i + 12 + fire_protection_material_column_inp_alt * 6 for i in range(0, 4)]
                 # get the numerical value for given fire protection materials
@@ -266,14 +376,41 @@ def show():
             st.write("---")
 
             data = {
-                'Total area': [int(total_floor_area_inp)],
+                'Modify default building parameter': [Building_para_modi],
                 'Story height': [int(story_height_inp)],
+                'Total area': [int(total_floor_area_inp)],
                 'Bay load': [bayload_inp],
+                'Building stories': [total_story],
                 'Bay size1': [baysize1_inp],
                 'Bay size2': [baysize2_inp],
             }
-            building_basic_information = pd.DataFrame(data)
-            st.session_state.building_basic_information = building_basic_information  # Attribute API
+            building_parameter_original = pd.DataFrame(data)
+            st.session_state.building_parameter_original = building_parameter_original  # Attribute API
+
+            data = {
+                'Modify fire design parameter': [fire_design_para_modi],
+                'Beam fire rating': [Beam_fire_rating_inp],
+                'Column fire rating': [column_fire_rating_inp],
+                'Beam fire protection material': [fire_protection_material_beam_inp],
+                'Column fire protection material': [fire_protection_material_column_inp],
+                'Beam fire protection percentage': [fire_protection_percentage_beam_inp],
+                'Column fire protection percentage': [fire_protection_percentage_column_inp],
+            }
+            fire_parameter_original = pd.DataFrame(data)
+            st.session_state.fire_parameter_original = fire_parameter_original  # Attribute API
+
+            if alter_design:
+                data = {
+                    'active alternative design': [alter_design],
+                    'Beam fire rating alt.': [Beam_fire_rating_inp_alt],
+                    'Column fire rating alt.': [column_fire_rating_inp_alt],
+                    'Beam fire protection material alt.': [fire_protection_material_beam_inp_alt],
+                    'Column fire protection material alt.': [fire_protection_material_column_inp_alt],
+                    'Beam fire protection percentage alt.': [fire_protection_percentage_beam_inp_alt],
+                    'Column fire protection percentage alt.': [fire_protection_percentage_column_inp_alt],
+                }
+                fire_parameter_alt = pd.DataFrame(data)
+                st.session_state.fire_parameter_alt = fire_parameter_alt  # Attribute API
 
             #define the size of the figure
             f1 = plt.figure(figsize=(6, 6), dpi=200)
@@ -290,7 +427,8 @@ def show():
             ax1.grid(True)
             column_fire_cost_given_rate=column_protection_cost[column_fire_rating_inp - 1]
             floor_protection_cost_given_rate=floor_protection_cost[Beam_fire_rating_inp - 1]
-            p1=ax1.bar([1,2,3,4,5,6,7], [floor_protection_cost_given_rate,column_fire_cost_given_rate,partition_cost,Sprinkler_cost,Fire_pump_cost,Alarm_cost,Ceiling_cost],width=0.4,edgecolor=[1,0,0])
+            cost_value_original=[floor_protection_cost_given_rate,column_fire_cost_given_rate,partition_cost,Sprinkler_cost,Fire_pump_cost,Alarm_cost,Ceiling_cost]
+            p1=ax1.bar([1,2,3,4,5,6,7], cost_value_original,width=0.4,edgecolor=[1,0,0])
             ax1.set_xticks([1,2,3,4,5,6,7],('Beams','Columns','Partition','Sprinkler', 'Fire pump', 'Alarm', 'Ceiling'))
             ax1.set_ylabel('Cost ($)')
             ax1.set_title('Fire service cost')
@@ -301,9 +439,10 @@ def show():
 
             # make the y axis can be shown on right side
             ax2 = ax1.twinx()
+            cost_value_original_multiplier=[floor_protection_cost_given_rate, column_fire_cost_given_rate, partition_cost, Sprinkler_cost,
+                          Fire_pump_cost, Alarm_cost, Ceiling_cost]/total_cost
             p2 = ax2.bar([1, 2, 3, 4, 5, 6, 7],
-                         [floor_protection_cost_given_rate, column_fire_cost_given_rate, partition_cost, Sprinkler_cost,
-                          Fire_pump_cost, Alarm_cost, Ceiling_cost]/total_cost,width=0.2,edgecolor=[1,0,0])
+                         cost_value_original_multiplier,width=0.2,edgecolor=[1,0,0])
             ax2.set_ylabel('Cost multiplier', color='red')
             ax2.tick_params(axis='y', labelcolor='red')
             p2[0].set_color([0,0.5,1])
@@ -333,12 +472,14 @@ def show():
 
             ax3 = f1.add_subplot(2, 1, 2)
             ax3.grid(True)
-
-            p1 = ax3.bar([1, 2],
-                         [floor_protection_labor_given_rate, column_fire_labor_given_rate], width=0.4, edgecolor=[1, 0, 0])
+            labor_hour_original = [floor_protection_labor_given_rate, column_fire_labor_given_rate]
+            p3 = ax3.bar([1, 2],
+                         labor_hour_original, width=0.4, edgecolor=[1, 0, 0])
             ax3.set_xticks([1, 2], ('Beams', 'Columns'))
             ax3.set_ylabel('Labor hour (hr)')
             ax3.set_title('Labor hour needed for crew G2')
+
+
 
 
 
@@ -366,71 +507,88 @@ def show():
                 construction_cost_df_updated_alt = pd.DataFrame(data)
 
 
-                ax2 = f2.add_subplot(2, 1, 1)
-                ax2.grid(True)
-
-                p2 = ax2.bar([1, 2, 3, 4, 5, 6, 7],
-                             [floor_protection_cost_given_rate, column_fire_cost_given_rate, partition_cost, Sprinkler_cost,
-                              Fire_pump_cost, Alarm_cost, Ceiling_cost], width=0.4, edgecolor=[1, 0, 0])
-                ax2.set_xticks([1, 2, 3, 4, 5, 6, 7],
+                ax4 = f2.add_subplot(2, 1, 1)
+                ax4.grid(True)
+                cost_value_alt=[floor_protection_cost_given_rate, column_fire_cost_given_rate, partition_cost, Sprinkler_cost,
+                              Fire_pump_cost, Alarm_cost, Ceiling_cost]
+                p4 = ax4.bar([1, 2, 3, 4, 5, 6, 7],
+                             cost_value_alt, width=0.4, edgecolor=[1, 0, 0])
+                ax4.set_xticks([1, 2, 3, 4, 5, 6, 7],
                                ('Beams', 'Columns', 'Partition', 'Sprinkler', 'Fire pump', 'Alarm', 'Ceiling'))
-                ax2.set_ylabel('Cost ($)')
-                ax2.set_title('Fire service cost (Alternative design)')
-                p2[0].set_color([0, 0.5, 1])
-                p2[0].set_edgecolor([0, 0, 1])
-                p2[1].set_color([0, 0.5, 1])
-                p2[1].set_edgecolor([0, 0, 1])
+                ax4.set_ylabel('Cost ($)')
+                ax4.set_title('Fire service cost (Alternative design)')
+                p4[0].set_color([0, 0.5, 1])
+                p4[0].set_edgecolor([0, 0, 1])
+                p4[1].set_color([0, 0.5, 1])
+                p4[1].set_edgecolor([0, 0, 1])
 
                 # make the y axis can be shown on right side
-                ax3 = ax2.twinx()
-                p3 = ax3.bar([1, 2, 3, 4, 5, 6, 7],
-                             [floor_protection_cost_given_rate, column_fire_cost_given_rate, partition_cost, Sprinkler_cost,
-                              Fire_pump_cost, Alarm_cost, Ceiling_cost] / total_cost, width=0.2, edgecolor=[1, 0, 0])
-                ax3.set_ylabel('Cost multiplier', color='red')
-                ax3.tick_params(axis='y', labelcolor='red')
-                p3[0].set_color([0, 0.5, 1])
-                p3[0].set_edgecolor([0, 0, 1])
-                p3[1].set_color([0, 0.5, 1])
-                p3[1].set_edgecolor([0, 0, 1])
+                ax5 = ax4.twinx()
+                cost_value_alt_multiplier=[floor_protection_cost_given_rate, column_fire_cost_given_rate, partition_cost, Sprinkler_cost,
+                              Fire_pump_cost, Alarm_cost, Ceiling_cost] / total_cost
+                p5 = ax5.bar([1, 2, 3, 4, 5, 6, 7],
+                             cost_value_alt_multiplier, width=0.2, edgecolor=[1, 0, 0])
+                ax5.set_ylabel('Cost multiplier', color='red')
+                ax5.tick_params(axis='y', labelcolor='red')
+                p5[0].set_color([0, 0.5, 1])
+                p5[0].set_edgecolor([0, 0, 1])
+                p5[1].set_color([0, 0.5, 1])
+                p5[1].set_edgecolor([0, 0, 1])
 
-                ax3 = f2.add_subplot(2, 1, 2)
-                ax3.grid(True)
-
-                p1 = ax3.bar([1, 2],
-                             [floor_protection_labor_given_rate, column_fire_labor_given_rate], width=0.4,
+                ax6 = f2.add_subplot(2, 1, 2)
+                ax6.grid(True)
+                labor_hour_alt=[floor_protection_labor_given_rate, column_fire_labor_given_rate]
+                p6 = ax6.bar([1, 2],
+                             labor_hour_alt, width=0.4,
                              edgecolor=[1, 0, 0])
-                ax3.set_xticks([1, 2], ('Beams', 'Columns'))
-                ax3.set_ylabel('Labor hour (hr)')
-                ax3.set_title('Labor hour needed for crew G2')
+                ax6.set_xticks([1, 2], ('Beams', 'Columns'))
+                ax6.set_ylabel('Labor hour (hr)')
+                ax6.set_title('Labor hour needed for crew G2')
 
-            ax3 = f3.add_subplot(2, 1, 1)
+                max_cost_value=1.1*max(cost_value_original+cost_value_alt)
+                max_cost_value_multiplier = 1.1*max(np.maximum(np.array(cost_value_original_multiplier), np.array(cost_value_alt_multiplier)))
 
-            p3 = ax3.bar([1, 2, 3, 4, 5, 6, 7],
+                max_labor_hour=1.1* max(labor_hour_original+ labor_hour_alt)
+
+                ax1.set_ylim(0, max_cost_value)
+                ax4.set_ylim(0, max_cost_value)
+
+                ax2.set_ylim(0, max_cost_value_multiplier)
+                ax5.set_ylim(0, max_cost_value_multiplier)
+
+                ax3.set_ylim(0, max_labor_hour)
+                ax6.set_ylim(0, max_labor_hour)
+
+
+
+            ax7 = f3.add_subplot(2, 1, 1)
+
+            p7 = ax7.bar([1, 2, 3, 4, 5, 6, 7],
                          building_information_ori[building_index-1, [19, 20, 21, 22, 23, 24, 25]],width=0.4,edgecolor=[1,0,0])
 
-            ax3.set_ylabel('Cost ($))', color='black')
-            ax3.tick_params(axis='y', labelcolor='black')
-            p3[0].set_color([0,0.5,1])
-            p3[0].set_edgecolor([0,0,1])
-            p3[1].set_color([0,0.5,1])
-            p3[1].set_edgecolor([0,0,1])
-            ax3.set_xticks([1,2,3,4,5,6,7],('Beams','Columns','Partition','Sprinkler', 'Fire pump', 'Alarm', 'Ceiling'))
-            ax3.set_ylabel('Cost ($)')
-            ax3.set_title('Original fire service cost')
+            ax7.set_ylabel('Cost ($))', color='black')
+            ax7.tick_params(axis='y', labelcolor='black')
+            p7[0].set_color([0,0.5,1])
+            p7[0].set_edgecolor([0,0,1])
+            p7[1].set_color([0,0.5,1])
+            p7[1].set_edgecolor([0,0,1])
+            ax7.set_xticks([1,2,3,4,5,6,7],('Beams','Columns','Partition','Sprinkler', 'Fire pump', 'Alarm', 'Ceiling'))
+            ax7.set_ylabel('Cost ($)')
+            ax7.set_title('Original fire service cost')
 
 
 
-            ax4 = ax3.twinx()
-            p4 = ax4.bar([1, 2, 3, 4, 5, 6, 7],
+            ax8 = ax7.twinx()
+            p8 = ax8.bar([1, 2, 3, 4, 5, 6, 7],
                          building_information_ori[building_index-1, [19, 20, 21, 22, 23, 24, 25]]/building_information_ori[building_index-1, 4],width=0.2,edgecolor=[1,0,0])
 
-            ax4.set_ylabel('Cost multiplier', color='red')
-            ax4.tick_params(axis='y', labelcolor='red')
-            p4[0].set_color([0,0.5,1])
-            p4[0].set_edgecolor([0,0,1])
-            p4[1].set_color([0,0.5,1])
-            p4[1].set_edgecolor([0,0,1])
-            ax3.grid(True)
+            ax8.set_ylabel('Cost multiplier', color='red')
+            ax8.tick_params(axis='y', labelcolor='red')
+            p8[0].set_color([0,0.5,1])
+            p8[0].set_edgecolor([0,0,1])
+            p8[1].set_color([0,0.5,1])
+            p8[1].set_edgecolor([0,0,1])
+            ax8.grid(True)
 
 
             # show the table that lists the original cost data

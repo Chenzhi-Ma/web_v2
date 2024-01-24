@@ -36,7 +36,6 @@ def show():
             upper_bound = (fragility_num) * 4+1
             lower_bound = (fragility_num - 1) * 4 + 1
             fragility_prob = np.asarray(fragility_curve.iloc[:, lower_bound:upper_bound])
-            print(upper_bound,lower_bound,fragility_prob)
             damage_state_num=4
 
         if fragility_curve_method =='Upload file':

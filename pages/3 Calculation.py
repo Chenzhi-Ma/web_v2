@@ -6,12 +6,12 @@ from subfolder import Construction_cost_estimation, Direct_damage_estimation, \
 
 
 # Initialize the current page in session state
-if 'current_page' not in st.session_state:
-    st.session_state['current_page'] = 'Calculation'
+if 'shown_page' not in st.session_state:
+    st.session_state['shown_page'] = 'Calculation'
 
 # Function to change the current page
 def set_page(page_name):
-    st.session_state['current_page'] = page_name
+    st.session_state['shown_page'] = page_name
 
 # Define a function for each page that wraps the module function
 def show_Calculation():
@@ -40,20 +40,48 @@ with st.sidebar:
 
     if st.button("1.Construction cost estimation"):
         set_page("Construction_cost_estimation")
-    if st.button("2.Direct_damage_estimation"):
+        Current_page="Current page: 1.Construction cost estimation"
+        st.session_state.Current_page = Current_page
+    if st.button("2.Direct damage estimation"):
         set_page("Direct_damage_estimation")
-    if st.button("3.Indirect_damage_estimation"):
+        Current_page="Current page: 2.Direct damage estimation"
+        st.session_state.Current_page = Current_page
+    if st.button("3.Indirect damage estimation"):
         set_page("Indirect_damage_estimation")
-    if st.button("4.Maintenance_estimation"):
+        Current_page ="Current page: 3.Indirect damage estimation"
+        st.session_state.Current_page = Current_page
+    if st.button("4.Maintenance estimation"):
         set_page("Maintenance_estimation")
-    if st.button("5.Co_benefit_estimation"):
+        Current_page="Current page: 4.Maintenance estimation"
+        st.session_state.Current_page = Current_page
+    if st.button("5.Co benefit estimation"):
         set_page("Co_benefit_estimation")
-    if st.button("6.ASTM_indexes_calculation"):
+        Current_page="Current page: 5.Co benefit estimation"
+        st.session_state.Current_page = Current_page
+    if st.button("6.ASTM indexes calculation"):
         set_page("ASTM_indexes_calculation")
-
+        Current_page ="Current page: 6.ASTM indexes calculation"
+        st.session_state.Current_page = Current_page
         # ... add buttons for other calculation subpages ...
+    if st.button("Restore saved inputs"):
+        set_page("Calculation")
+        Current_page ="Current page: home page for calculation"
+        st.session_state.Current_page = Current_page
+    try:
+        # Attempt to use the variable
+        _ = st.session_state.Current_page
+        # If no error, the variable is defined
+        variable_defined = True
+    except AttributeError:
+        # If an AttributeError is caught, the variable is not defined
+        variable_defined = False
 
-    # ... add any other buttons or expanders for navigation ...
+    # Now you can use the variable_defined flag to determine if Current_page is defined
+
+    if variable_defined:
+        st.write(st.session_state.Current_page)
+    else:
+        st.write("Please start from step 1")
 
 # Call the function to render the current page
 page_name_to_function = {
@@ -67,4 +95,4 @@ page_name_to_function = {
     # ... map the rest of your pages ...
 }
 
-page_name_to_function[st.session_state['current_page']]()
+page_name_to_function[st.session_state['shown_page']]()

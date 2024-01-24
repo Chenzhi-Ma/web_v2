@@ -9,20 +9,36 @@ st.set_page_config(
 )
 
 st.write("# Welcome to PBSFD project! 👋")
+
 # Streamlit app
 st.markdown('### **Enter the path for saving the files**')
 # User input for the save path
-save_path = st.text_input('Path:')
-st.write(save_path)
+
+if st.checkbox("Customized download path"):
+    save_path = st.text_input('Path:')
+else:
+    save_path=''
 st.session_state.path_for_save = save_path     # Attribute API
+
+st.markdown(save_path)
+if st.button(f"Click to show the saved path"):
+    st.markdown(st.session_state.path_for_save)
+
 # upload images
 
-floor_diagram = "images/floor diagram.jpg"
-floor_diagram_rsmeans = "images/concrete slab over metal deck.jpg"
+
 
 # Display the image based on the file path
 
-
+st.markdown('''
+## Purpose 
+This project will quantify the economic impact of alternative, performance-based designs for structural 
+performance in fire of composite steel-framed buildings. Experiments at the NIST NFRL are supporting the development 
+of new methods to quantify the structural performance in fire, however, wide adoption for design of these engineering 
+methods in lieu of the current prescriptive fire protection rules require economic data to highlight possible benefits. 
+By providing cost assessment and evaluation of case studies to complement forthcoming design methods, the project 
+will contribute to support new provisions in building codes for a more efficient use of resources in the U.S. construction industry.
+''')
 
 st.markdown('''
 # Source code:  

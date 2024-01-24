@@ -24,8 +24,8 @@ def show():
         if indirect_damage_method == 'input own value':
             indirect_damage_loss=st.number_input("Input indirect damage loss")
 
-        building_basic_information = st.session_state.building_basic_information
-        Affect_area = building_basic_information['Total area'][0]
+        building_parameter_original = st.session_state.building_parameter_original
+        Affect_area = building_parameter_original['Total area'][0]
         if indirect_damage_method == 'Default method':
             print(1)
             # alter_design = st.checkbox('Do you want to get indirect damage cost value for alternative design?')

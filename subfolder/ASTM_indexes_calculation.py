@@ -16,7 +16,7 @@ def show():
     with st.sidebar:
         st.markdown("## **User Input Parameter**")
         astm_index_method = st.selectbox(
-            'How would you like to input cost value (present value)',
+            'How would you like to input cost value (present pvalue)',
             ('Based on previous data','type value', 'upload file with given format'))
         #st.markdown("**parameters for alternative design**")
         #alter_design = st.checkbox('Do you want to get damage cost value for alternative design?')
