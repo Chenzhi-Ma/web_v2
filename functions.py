@@ -288,5 +288,6 @@ def convert_state_from_json(serialized_state):
             original_state[key] = value
     return original_state
 
-def update_session_state(key, value):
-    st.session_state[key] = value
+def update_session_state(key):
+    """Generic callback to update session state based on the widget's key."""
+    st.session_state[key] = st.session_state[f"temp_{key}"]

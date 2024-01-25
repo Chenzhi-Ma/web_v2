@@ -12,31 +12,37 @@ def show():
 
     st.header("Economic impact of performance-based structural fire design")
 
-
-
     with st.sidebar:
         st.markdown("## **User Input Parameter**")
         study_year_saved=50
         maintenance_cost_annually_percentage_saved=3.00
         discount_rate_saved=3.00
         maintenance_cost_annually_percentage_saved_alt=3.00
+        option_analysis_type = st.session_state.option_analysis_type
 
-        if 'maintenance_input_original' in st.session_state:
-            maintenance_input_original = st.session_state.maintenance_input_original
-            maintenance_cost_annually_percentage_saved=maintenance_input_original.at[0, 'Percentage as initial construction cost']
-            discount_rate_saved=maintenance_input_original.at[0, 'Input the discount rate']
-            study_year_saved=maintenance_input_original.at[0, 'Study year']
+
+        if st.checkbox("Reset to default parameter (Maintenance)",value=False):
+            option_analysis_type='Start a new analysis'
+            st.write('**The restored input parameter would not be applied**')
+
+
+
+
+        if option_analysis_type == 'Load session variables':
+            if 'maintenance_input_original' in st.session_state:
+                maintenance_input_original = st.session_state.maintenance_input_original
+                maintenance_cost_annually_percentage_saved=maintenance_input_original.at[0, 'Percentage as initial construction cost']
+                discount_rate_saved=maintenance_input_original.at[0, 'Input the discount rate']
+                study_year_saved=maintenance_input_original.at[0, 'Study year']
+            if 'maintenance_input_alt' in st.session_state:
+                maintenance_input_alt = st.session_state.maintenance_input_alt
+                maintenance_cost_annually_percentage_saved_alt = maintenance_input_alt.at[
+                    0, 'Percentage as initial construction cost for alt.']
 
         study_year = st.number_input("Input study year of the building", value=study_year_saved)
         maintenance_cost_method = st.selectbox(
             'How would you like to define maintenance cost',
             ('Constant percentage of total construction cost', 'input own value with respected to year'))
-
-
-
-        if 'maintenance_input_alt' in st.session_state:
-            maintenance_input_alt = st.session_state.maintenance_input_alt
-            maintenance_cost_annually_percentage_saved_alt=maintenance_input_alt.at[0, 'Percentage as initial construction cost for alt.']
 
         if maintenance_cost_method == 'Constant percentage of total construction cost':
             maintenance_cost_annually_percentage = st.number_input("Input percentage as initial construction cost",value=maintenance_cost_annually_percentage_saved)/100
@@ -44,7 +50,7 @@ def show():
             #study_year=st.number_input("Input the study year (building lifetime)",value=50, step=1)
 
 
-        if maintenance_cost_method == 'input own value with respected to year':
+        if maintenance_cost_method == 'Input own value with respected to year':
             uploaded_file_maintenance = st.file_uploader(
                 "Choose a file with maintenance cost and year (value in future)")
 

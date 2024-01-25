@@ -27,18 +27,27 @@ def show():
         muq_saved = 420
         sigmaq_saved = 120
 
+        option_analysis_type = st.session_state.option_analysis_type
+
+        if st.checkbox("Reset to default parameter (Direct damage)",value=False):
+            option_analysis_type = 'Start a new analysis'
+            st.write('**The restored input parameter would not be applied**')
+
+
+
         if 'maintenance_input_original' in st.session_state:
             maintenance_input_original = st.session_state.maintenance_input_original
-            study_year_saved=maintenance_input_original.at[0, 'Study year']
+            study_year_saved = maintenance_input_original.at[0, 'Study year']
 
-        if 'fragility_parameter_original' in st.session_state:
-            fragility_parameter_original = st.session_state.fragility_parameter_original
-            Severe_fire_pro_saved = fragility_parameter_original.at[0, 'Probability of severe fire (*10-7)']
-            Compartment_num_saved = fragility_parameter_original.at[0, 'Number of compartment']
-            fragility_num_saved = fragility_parameter_original.at[0, 'Index of the fragility curves']
-            muq_saved = fragility_parameter_original.at[0, 'Location parameter of fire load (mu)']
-            sigmaq_saved = fragility_parameter_original.at[0, 'Scale parameter of fire load (sigma)']
-            damage_state_cost_value_saved = fragility_parameter_original.at[0, 'Damage cost value']
+        if option_analysis_type == 'Load session variables':
+            if 'fragility_parameter_original' in st.session_state:
+                fragility_parameter_original = st.session_state.fragility_parameter_original
+                Severe_fire_pro_saved = fragility_parameter_original.at[0, 'Probability of severe fire (*10-7)']
+                Compartment_num_saved = fragility_parameter_original.at[0, 'Number of compartment']
+                fragility_num_saved = fragility_parameter_original.at[0, 'Index of the fragility curves']
+                muq_saved = fragility_parameter_original.at[0, 'Location parameter of fire load (mu)']
+                sigmaq_saved = fragility_parameter_original.at[0, 'Scale parameter of fire load (sigma)']
+                damage_state_cost_value_saved = fragility_parameter_original.at[0, 'Damage cost value']
 
         Severe_fire_pro = st.number_input("Input probability of severe fire in a compartment (*10-7)", value=Severe_fire_pro_saved)
         Compartment_num = st.number_input("Input number of compartment", value=Compartment_num_saved)
@@ -74,11 +83,26 @@ def show():
         construction_cost_df = st.session_state.construction_cost_df
         CI = construction_cost_df['Floor'][0] + construction_cost_df['Column'][0]
 
-        if 'fragility_parameter_original' in st.session_state:
-            damage_state_cost_value=damage_state_cost_value_saved
-            st.write("Stored damage state cost value:", damage_state_cost_value)
+        if option_analysis_type == 'Load session variables':
+            if 'fragility_parameter_original' in st.session_state:
+                damage_state_cost_value=damage_state_cost_value_saved
+                print(option_analysis_type)
+                st.write("Stored damage state cost value:", damage_state_cost_value)
+            else:
+                damage_state_cost_value = st.text_area("Enter your damage state value (comma-separated):")
+            # Process the input and convert it into a NumPy array
+                if damage_state_cost_value:
+                    try:
+                        input_list = [float(item.strip()) for item in damage_state_cost_value.split(',')]
+                        damage_state_cost_value = np.array(input_list)
+                        st.write("Input damage state cost value:", damage_state_cost_value)
+                    except ValueError:
+                        st.write("Invalid input. Please enter a valid comma-separated list of numbers.")
+                else:
+                    damage_state_cost_value=[1.00*CI,10.00*CI,100.00*CI,1000.00*CI]
+                    st.write("Default damage state cost value:", damage_state_cost_value)
 
-        else:
+        if option_analysis_type == 'Start a new analysis':
             damage_state_cost_value = st.text_area("Enter your damage state value (comma-separated):")
         # Process the input and convert it into a NumPy array
             if damage_state_cost_value:
@@ -91,6 +115,8 @@ def show():
             else:
                 damage_state_cost_value=[1.00*CI,10.00*CI,100.00*CI,1000.00*CI]
                 st.write("Default damage state cost value:", damage_state_cost_value)
+
+
 
         fire_load_distribution = st.selectbox(
             'How would you like to define the fire load distribution',
@@ -125,28 +151,40 @@ def show():
         else:
             alter_design=[]
         if alter_design:
+            fragility_num_alt_saved = 1
 
-            if 'fragility_parameter_alt' in st.session_state:
-                fragility_parameter_alt=st.session_state.fragility_parameter_alt
-                fragility_num_alt_saved = fragility_parameter_alt.at[0, 'Index of the fragility curves for alt.']
-                damage_state_cost_value_alt_saved = fragility_parameter_alt.at[0, 'Damage cost value for alt.']
-            else:
-                fragility_num_alt_saved=1
+            if option_analysis_type == 'Load session variables':
+                if 'fragility_parameter_alt' in st.session_state:
+                    fragility_parameter_alt=st.session_state.fragility_parameter_alt
+                    fragility_num_alt_saved = fragility_parameter_alt.at[0, 'Index of the fragility curves for alt.']
+                    damage_state_cost_value_alt_saved = fragility_parameter_alt.at[0, 'Damage cost value for alt.']
+                    damage_state_cost_value_alt = damage_state_cost_value_alt_saved
+                    st.write("Stored damage state cost value:", damage_state_cost_value_alt)
+                else:
+                    damage_state_cost_value_alt = st.text_area("Enter your damage state value (comma-separated) alt.:")
+                    # Process the input and convert it into a NumPy array
+                    if damage_state_cost_value_alt:
+                        try:
+                            input_list = [float(item.strip()) for item in damage_state_cost_value_alt.split(',')]
+                            damage_state_cost_value_alt = np.array(input_list)
+                            st.write("Input damage state cost value for alt.:", damage_state_cost_value_alt)
+                        except ValueError:
+                            st.write("Invalid input. Please enter a valid comma-separated list of numbers.")
+                    else:
+                        construction_cost_df_alt = st.session_state.construction_cost_df_alt
+                        CI_alt = construction_cost_df_alt['Floor'][0] + construction_cost_df_alt['Column'][0]
+                        damage_state_cost_value_alt = [1.00 * CI_alt, 10.00 * CI_alt, 100.00 * CI_alt, 1000.00 * CI_alt]
+                        st.write("Default damage state cost value alt.:", damage_state_cost_value_alt)
 
 
             fragility_num_alt = st.number_input("Input the index of the built-in fragility curves (alt.)", step=1,value=fragility_num_alt_saved, max_value=10,min_value=1)
-            damage_state_num = 4
             upper_bound = (fragility_num_alt) * damage_state_num+1
             lower_bound = (fragility_num_alt - 1) * damage_state_num + 1
             fragility_prob_alt = np.asarray(fragility_curve.iloc[:, lower_bound:upper_bound])
             # Display a text astreamrea for the user to input the array
             # damage_state_cost_value_alt = st.text_area("Enter your damage state value (comma-separated) alt.:")
             # Process the input and convert it into a NumPy array
-
-            if 'fragility_parameter_alt' in st.session_state:
-                damage_state_cost_value_alt = damage_state_cost_value_alt_saved
-                st.write("Stored damage state cost value:", damage_state_cost_value_alt)
-            else:
+            if option_analysis_type == 'Start a new analysis':
                 damage_state_cost_value_alt = st.text_area("Enter your damage state value (comma-separated) alt.:")
                 # Process the input and convert it into a NumPy array
                 if damage_state_cost_value_alt:

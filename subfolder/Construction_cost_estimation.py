@@ -97,9 +97,14 @@ def show():
                     BI_saved=st.session_state.BI
                 else:
                     BI_saved=1
-            BI = st.number_input("Input Building index (start from 1)",value=BI_saved, step=1)
 
-            st.session_state.BI = BI  # Attribute API
+
+            BI = BI_saved
+            BI = st.number_input("Input Building index (start from 1)",value=BI_saved, step=1, key=f"temp_{BI}",
+                           on_change=update_session_state,
+                           args=(BI,))
+
+            # st.session_state.BI = BI  # Attribute API
             # Set up the basic non-editable building parameter
             building_index = BI
             Building_type = int(building_information_ori[building_index - 1][8])
@@ -188,17 +193,18 @@ def show():
 
             if option_analysis_type == 'Start a new analysis':
                 fire_design_para_modi_saved = fire_design_para_modi
-            elif 'fire_parameter_original' in st.session_state:
-                fire_parameter_original_saved = st.session_state.fire_parameter_original
-                fire_design_para_modi_saved=fire_parameter_original_saved.at[0, 'Modify fire design parameter']
-                Beam_fire_rating_inp = fire_parameter_original_saved.at[0, 'Beam fire rating']
-                column_fire_rating_inp = fire_parameter_original_saved.at[0, 'Column fire rating']
-                fire_protection_material_beam_inp = fire_parameter_original_saved.at[0, 'Beam fire protection material']
-                fire_protection_material_column_inp = fire_parameter_original_saved.at[0, 'Column fire protection material']
-                fire_protection_percentage_beam_inp = fire_parameter_original_saved.at[0, 'Beam fire protection percentage']
-                fire_protection_percentage_column_inp = fire_parameter_original_saved.at[0, 'Column fire protection percentage']
-            else:
-                fire_design_para_modi_saved = fire_design_para_modi
+            elif option_analysis_type == 'Load session variables':
+                if 'fire_parameter_original' in st.session_state:
+                    fire_parameter_original_saved = st.session_state.fire_parameter_original
+                    fire_design_para_modi_saved=fire_parameter_original_saved.at[0, 'Modify fire design parameter']
+                    Beam_fire_rating_inp = fire_parameter_original_saved.at[0, 'Beam fire rating']
+                    column_fire_rating_inp = fire_parameter_original_saved.at[0, 'Column fire rating']
+                    fire_protection_material_beam_inp = fire_parameter_original_saved.at[0, 'Beam fire protection material']
+                    fire_protection_material_column_inp = fire_parameter_original_saved.at[0, 'Column fire protection material']
+                    fire_protection_percentage_beam_inp = fire_parameter_original_saved.at[0, 'Beam fire protection percentage']
+                    fire_protection_percentage_column_inp = fire_parameter_original_saved.at[0, 'Column fire protection percentage']
+                else:
+                    fire_design_para_modi_saved = fire_design_para_modi
 
             fire_design_para_modi=fire_design_para_modi_saved
 
@@ -310,17 +316,18 @@ def show():
 
             if option_analysis_type == 'Start a new analysis':
                 alter_design_saved = alter_design
-            elif 'fire_parameter_alt' in st.session_state:
-                fire_parameter_alt_saved = st.session_state.fire_parameter_alt
-                alter_design_saved=fire_parameter_alt_saved.at[0, 'active alternative design']
-                Beam_fire_rating_inp_alt = fire_parameter_alt_saved.at[0, 'Beam fire rating alt.']
-                column_fire_rating_inp_alt = fire_parameter_alt_saved.at[0, 'Column fire rating alt.']
-                fire_protection_material_beam_inp_alt = fire_parameter_alt_saved.at[0, 'Beam fire protection material alt.']
-                fire_protection_material_column_inp_alt = fire_parameter_alt_saved.at[0, 'Column fire protection material alt.']
-                fire_protection_percentage_beam_inp_alt = fire_parameter_alt_saved.at[0,  'Beam fire protection percentage alt.']
-                fire_protection_percentage_column_inp_alt = fire_parameter_alt_saved.at[0, 'Column fire protection percentage alt.']
-            else:
-                alter_design_saved = alter_design
+            elif option_analysis_type == 'Load session variables':
+                if 'fire_parameter_alt' in st.session_state:
+                    fire_parameter_alt_saved = st.session_state.fire_parameter_alt
+                    alter_design_saved=fire_parameter_alt_saved.at[0, 'active alternative design']
+                    Beam_fire_rating_inp_alt = fire_parameter_alt_saved.at[0, 'Beam fire rating alt.']
+                    column_fire_rating_inp_alt = fire_parameter_alt_saved.at[0, 'Column fire rating alt.']
+                    fire_protection_material_beam_inp_alt = fire_parameter_alt_saved.at[0, 'Beam fire protection material alt.']
+                    fire_protection_material_column_inp_alt = fire_parameter_alt_saved.at[0, 'Column fire protection material alt.']
+                    fire_protection_percentage_beam_inp_alt = fire_parameter_alt_saved.at[0,  'Beam fire protection percentage alt.']
+                    fire_protection_percentage_column_inp_alt = fire_parameter_alt_saved.at[0, 'Column fire protection percentage alt.']
+                else:
+                    alter_design_saved = alter_design
 
             alter_design=alter_design_saved
 

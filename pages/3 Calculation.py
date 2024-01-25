@@ -1,7 +1,7 @@
 import streamlit as st
 
 from subfolder import Construction_cost_estimation, Direct_damage_estimation, \
-    Indirect_damage_estimation, Maintenance_estimation, Co_benefit_estimation, ASTM_indexes_calculation, Calculation
+    Indirect_damage_estimation, Maintenance_estimation, Co_benefit_estimation, ASTM_indexes_calculation, Calculation,Extra_cost_estimation
 
 
 
@@ -28,7 +28,8 @@ def show_Direct_damage_estimation():
 
 def show_Indirect_damage_estimation():
     Indirect_damage_estimation.show()
-
+def show_Extra_cost_estimation():
+    Extra_cost_estimation.show()
 
 def show_Co_benefit_estimation():
     Co_benefit_estimation.show()
@@ -43,23 +44,33 @@ with st.sidebar:
         set_page("Construction_cost_estimation")
         Current_page="Current page: 1.Construction cost estimation"
         st.session_state.Current_page = Current_page
+
     if st.button("2.Maintenance estimation"):
         set_page("Maintenance_estimation")
-        Current_page = "Current page: 4.Maintenance estimation"
+        Current_page = "Current page: 2.Maintenance estimation"
         st.session_state.Current_page = Current_page
+
     if st.button("3.Direct damage estimation"):
         set_page("Direct_damage_estimation")
-        Current_page="Current page: 2.Direct damage estimation"
+        Current_page="Current page: 3.Direct damage estimation"
         st.session_state.Current_page = Current_page
+
     if st.button("4.Indirect damage estimation"):
         set_page("Indirect_damage_estimation")
-        Current_page ="Current page: 3.Indirect damage estimation"
+        Current_page ="Current page: 4.Indirect damage estimation"
         st.session_state.Current_page = Current_page
-    if st.button("5.Co benefit estimation"):
+
+    if st.button("5.Extra cost estimation"):
+        set_page("Extra_cost_estimation")
+        Current_page = "Current page: 5.Extra cost estimation"
+        st.session_state.Current_page = Current_page
+
+    if st.button("6.Co benefit estimation"):
         set_page("Co_benefit_estimation")
         Current_page="Current page: 5.Co benefit estimation"
         st.session_state.Current_page = Current_page
-    if st.button("6.ASTM indexes calculation"):
+
+    if st.button("7.ASTM indexes calculation"):
         set_page("ASTM_indexes_calculation")
         Current_page ="Current page: 6.ASTM indexes calculation"
         st.session_state.Current_page = Current_page
@@ -88,9 +99,10 @@ with st.sidebar:
 page_name_to_function = {
     'Calculation': show_Calculation,
     'Construction_cost_estimation': show_Construction_cost_estimation,
+    'Maintenance_estimation': show_Maintenance_estimation,
     'Direct_damage_estimation': show_Direct_damage_estimation,
     'Indirect_damage_estimation': show_Indirect_damage_estimation,
-    'Maintenance_estimation': show_Maintenance_estimation,
+    'Extra_cost_estimation': show_Extra_cost_estimation,
     'Co_benefit_estimation': show_Co_benefit_estimation,
     'ASTM_indexes_calculation': show_ASTM_indexes_calculation,
     # ... map the rest of your pages ...
