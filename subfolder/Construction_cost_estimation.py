@@ -490,13 +490,6 @@ def show():
             ax3.set_ylabel('Labor hour (hr)')
             ax3.set_title('Labor hour needed for crew G2')
 
-
-
-
-
-
-
-
             if alter_design:
                 st.session_state.alter_design = alter_design  # Attribute API
 
@@ -586,7 +579,6 @@ def show():
             ax7.set_xticks([1,2,3,4,5,6,7],('Beams','Columns','Partition','Sprinkler', 'Fire pump', 'Alarm', 'Ceiling'))
             ax7.set_ylabel('Cost ($)')
             ax7.set_title('Original fire service cost')
-
 
 
             ax8 = ax7.twinx()

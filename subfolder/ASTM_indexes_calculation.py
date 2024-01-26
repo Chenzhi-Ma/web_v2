@@ -169,3 +169,30 @@ def show():
             ax1.legend()
 
             st.pyplot(f1)
+
+        Download = st.checkbox('Do you want to download the detailed member cost')
+        if alter_design:
+            if Download:
+                result = pd.concat([Cost_summary, astm_index], axis=1)
+                cost_save_tocsv = result.to_csv(index=False)
+               # cost_save_tocsv_string_io = StringIO(cost_save_tocsv)
+                # Create a download button
+                st.download_button(
+                    label="Download CSV",
+                    data=cost_save_tocsv,
+                    file_name='user_updated_lcc.csv',
+                    mime='text/csv',
+                )
+
+        else:
+            if Download:
+                result = pd.concat([Cost_summary_ref, astm_index], axis=1)
+                cost_save_tocsv = result.to_csv(index=False)
+               # cost_save_tocsv_string_io = StringIO(cost_save_tocsv)
+                # Create a download button
+                st.download_button(
+                    label="Download CSV",
+                    data=cost_save_tocsv,
+                    file_name='user_updated_lcc.csv',
+                    mime='text/csv',
+                )
