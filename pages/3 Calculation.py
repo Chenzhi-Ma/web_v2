@@ -75,7 +75,7 @@ with st.sidebar:
         Current_page ="Current page: 6.ASTM indexes calculation"
         st.session_state.Current_page = Current_page
         # ... add buttons for other calculation subpages ...
-    if st.button("Restore saved inputs"):
+    if st.button("Save and Restore inputs"):
         set_page("Calculation")
         Current_page ="Current page: home page for calculation"
         st.session_state.Current_page = Current_page
