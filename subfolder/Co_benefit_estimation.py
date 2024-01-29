@@ -7,19 +7,16 @@ import pickle
 from functions import column_cost_calculation, floor_system_cost,fire_service_cost,calculate_fireprotection_cost
 import matplotlib.pyplot as plt
 def show():
-    st.title('Co benefit estimation')
+    st.title('Co-benefit estimation')
 
     st.header("Economic impact of performance-based structural fire design")
 
-    with st.sidebar:
+    with (((st.sidebar))):
         # Set up the part for user input file
         if "alter_design" in st.session_state:
             alter_design = st.session_state.alter_design
         else:
             alter_design = []
-
-
-
 
 
         st.markdown("## **User Input Parameter**")
@@ -31,7 +28,7 @@ def show():
 
 
 
-        rent_loss_selection = st.checkbox("run the rent loss analysis",value=True)
+        rent_loss_selection = st.checkbox("Run the rent loss analysis",value=True)
         rent_loss = 0
         rent_loss_alt = 0
 
@@ -89,12 +86,90 @@ def show():
             # alter_design = st.checkbox('Do you want to get indirect damage cost value for alternative design?')
             #st.markdown("**parameters for alternative design**")
             # alter_design = st.checkbox('Do you want to get damage cost value for alternative design?')
+
+        uploaded_file_cost=st.session_state.uploaded_file_cost
+        value = np.asarray(uploaded_file_cost.iloc[2:5, 33])
+        SFRM_volume = value
+        value = np.asarray(uploaded_file_cost.iloc[2, 31])
+        beam_unit_material_cost = float(value)
+        GWP_material = np.asarray(uploaded_file_cost.iloc[7:11, 25:27])
+        GWP_density = np.asarray(uploaded_file_cost.iloc[7:11, 27])
+        beam_sfrm_unit_volume=float(SFRM_volume[0])
+
+
+        construction_cost_df_updated = st.session_state.construction_cost_df
+        fire_parameter_original = st.session_state.fire_parameter_original   # Attribute API
+        fire_material_floor = fire_parameter_original.at[0,'Beam fire protection material']
+        fire_material_column = fire_parameter_original.at[0, 'Column fire protection material']
+        beam_f_density=float(GWP_density[fire_material_floor-1])
+        column_f_density=float(GWP_density[fire_material_column-1])
+        beam_f_gwp=int(GWP_material[fire_material_floor-1,1])
+        column_f_gwp=int(GWP_material[fire_material_column-1,1])
+
+        GWP_selection = st.checkbox("Run the global warming analysis", value=True)
+        if GWP_selection:
+            GWP_analysis_type = st.selectbox(
+                "Analysis type",
+                ('Default value','Input own value'),
+            )
+            if GWP_analysis_type == 'Input own value':
+                col1, col2 = st.columns(2)
+                with col1:
+                    beam_f_density = st.number_input("Input beam fire protection density pcf", value=20)
+                with col2:
+                    column_f_density = st.number_input("Input column fire protection density pcf", value=20)
+
+                col1, col2 = st.columns(2)
+                with col1:
+                    beam_f_gwp = st.number_input("Input beam fire protection global warming (kg CO2 eq) per 1000kg unit material", value=500)
+                with col2:
+                    column_f_gwp = st.number_input("Input column fire protection global warming (kg CO2 eq) per 1000kg unit material", value=500)
+
+
+
+            total_sfrm_cost_original = construction_cost_df_updated.at[0, 'Floor']/beam_unit_material_cost*beam_sfrm_unit_volume*\
+                                       beam_f_density*0.4536/1000*beam_f_gwp+\
+                                       construction_cost_df_updated.at[0, 'Column']/beam_unit_material_cost*beam_sfrm_unit_volume*\
+                                       column_f_density*0.4536/1000*column_f_gwp
+
+
+
             if alter_design:
+                st.markdown('---')
+                st.markdown('### Parameter for alternative design:')
 
                 construction_cost_df_alt = st.session_state.construction_cost_df_alt
                 total_labor_hour_alt = construction_cost_df_alt['Floor'][2] + construction_cost_df_alt['Column'][2]
                 rent_loss_alt = (total_labor_hour_alt / number_crew + Cure_time) * Unit_rent_loss / 24 / 30 * Affect_area*per_rented
                 Cobenefits_value_alt = 0
+                construction_cost_df_updated_alt = st.session_state.construction_cost_df_alt
+                fire_parameter_alt = st.session_state.fire_parameter_original   # Attribute API
+                fire_material_floor_alt = fire_parameter_alt.at[0,'Beam fire protection material']
+                fire_material_column_alt = fire_parameter_alt.at[0, 'Column fire protection material']
+
+                beam_f_density_alt = float(GWP_density[fire_material_floor_alt - 1])
+                column_f_density_alt = float(GWP_density[fire_material_column_alt - 1])
+                beam_f_gwp_alt = int(GWP_material[fire_material_floor_alt - 1, 1])
+                column_f_gwp_alt = int(GWP_material[fire_material_column_alt - 1, 1])
+
+                if GWP_selection:
+                    if GWP_analysis_type == 'Input own value':
+                        col1, col2 = st.columns(2)
+                        with col1:
+                            beam_f_density_alt = st.number_input("Input beam fire protection density for alt. pcf", value=20)
+                        with col2:
+                            column_f_density_alt = st.number_input("Input column fire protection density for alt. pcf", value=20)
+                        col1, col2 = st.columns(2)
+                        with col1:
+                            beam_f_gwp_alt = st.number_input("Input beam fire protection global warming (kg CO2 eq) per 1000kg unit material for alt.", value=500)
+                        with col2:
+                            column_f_gwp_alt = st.number_input("Input column fire protection global warming (kg CO2 eq) per 1000kg unit material for alt.", value=500)
+
+
+                    total_sfrm_cost_alt = construction_cost_df_updated_alt.at[0, 'Floor']/beam_unit_material_cost*beam_sfrm_unit_volume*\
+                                               beam_f_density_alt*0.4536/1000*beam_f_gwp_alt+\
+                                               construction_cost_df_updated_alt.at[0, 'Column']/beam_unit_material_cost*beam_sfrm_unit_volume*\
+                                               column_f_density_alt*0.4536/1000*column_f_gwp_alt
 
 
         st.write('---')
@@ -118,13 +193,11 @@ def show():
         st.subheader('Results')
         st.write("---")
         data = {
-            'rent loss': [int(rent_loss)],
+            'Rent loss': [int(rent_loss)],
             'Cobenefit': [Cobenefits_value],
+            'GWP(CO_2)': [int(total_sfrm_cost_original)],
         }
         Cobenefits_value_df = pd.DataFrame(data)
-
-
-
 
 
         if rent_loss_selection:
@@ -148,8 +221,10 @@ def show():
             with col2:
                 st.write("**Results for alternative design**")
                 data = {
-                    'rent loss': [int(rent_loss_alt)],
+                    'Rent loss': [int(rent_loss_alt)],
                     'Cobenefit': [Cobenefits_value_alt],
+                    'GWP(CO_2)': [int(total_sfrm_cost_alt)],
+
                 }
                 Cobenefits_value_alt_df = pd.DataFrame(data)
 

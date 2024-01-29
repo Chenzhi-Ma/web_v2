@@ -36,7 +36,7 @@ def show():
             Maintenance_cost_df=st.session_state.Maintenance_cost_df   # Attribute API
             CM_ref=Maintenance_cost_df['Maintenance cost']
             Cobenefits_value_df=st.session_state.Cobenefits_value_df    # Attribute API
-            CB_ref=Cobenefits_value_df['Cobenefit']-Cobenefits_value_df['rent loss']
+            CB_ref=Cobenefits_value_df['Cobenefit']-Cobenefits_value_df['Rent loss']
 
             pvlcc_ref = CI_ref + DD_ref + ID_ref+CM_ref - CB_ref
 
@@ -50,7 +50,7 @@ def show():
                 maintenance_cost_total_alt=st.session_state.maintenance_cost_total_alt  # Attribute API
                 CM_alt=maintenance_cost_total_alt['Maintenance cost']
                 Cobenefits_value_df_alt=st.session_state.Cobenefits_value_df_alt    # Attribute API
-                CB_alt=Cobenefits_value_df_alt['Cobenefit']-Cobenefits_value_df_alt['rent loss']
+                CB_alt=Cobenefits_value_df_alt['Cobenefit']-Cobenefits_value_df_alt['Rent loss']
                 extra_cost_df=st.session_state.extra_cost_df    # Attribute API
 
                 Extra_ref =extra_cost_df.at[
@@ -101,7 +101,7 @@ def show():
 
 
         #st.session_state.PVLCC = pvlcc  # Attribute API
-        st.markdown("### present value life cycle cost of given fire design")
+        st.markdown("### Present value life cycle cost of given fire design")
         f1 = plt.figure(figsize=(8, 8), dpi=300)
         # two subplots are adopted
         plt.subplots_adjust(left=0.1, right=0.9, top=0.9, bottom=0.1, wspace=0.4, hspace=0.4)
@@ -126,7 +126,7 @@ def show():
             ax1 = f1.add_subplot(2, 1, 1)
             ax1.grid(True)
             p1 = ax1.bar(x - bar_width / 2, value_ref,bar_width, label='Ref.', align='center')
-            ax1.set_xticks(x,('Construction','Maintenance','Direct','Indirect', 'Co-benefit','Extra cost', 'PVLCC'))
+            ax1.set_xticks(x,('Construction','Maintenance','Direct','Indirect', 'Extra cost', 'Co-benefit','PVLCC'))
             p2 = ax1.bar(x + bar_width / 2, value_alt, bar_width, label='Alt.', align='center')
             ax1.set_ylabel('Cost ($)')
             ax1.set_title('Lifetime cost breakdown')
@@ -163,7 +163,7 @@ def show():
             ax1 = f1.add_subplot(2, 1, 1)
             ax1.grid(True)
             p1 = ax1.bar(x - bar_width / 2, value_ref,bar_width, label='Ref.', align='center')
-            ax1.set_xticks(x,('Construction','Maintenance','Direct','Indirect', 'Co-benefit','Extra cost', 'PVLCC'))
+            ax1.set_xticks(x,('Construction','Maintenance','Direct','Indirect','Extra cost', 'Co-benefit' ,'PVLCC'))
             ax1.set_ylabel('Cost ($)')
             ax1.set_title('Lifetime cost breakdown')
             ax1.legend()

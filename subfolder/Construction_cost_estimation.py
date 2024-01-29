@@ -63,32 +63,15 @@ def show():
                             del st.session_state[key]
 
             st.session_state.option_analysis_type=option_analysis_type
-            if option_analysis_type !='Start a new analysis':
-                key_to_clear = 'building_parameter_original'
-                if st.button(f"Clear stored building design parameter from Session State"):
-                    if key_to_clear in st.session_state:
-                        del st.session_state[key_to_clear]
-                        st.write(f"'{key_to_clear}' has been cleared from session state.")
-                    else:
-                        st.write(f"'{key_to_clear}' is not in session state.")
-
-                key_to_clear = 'fire_parameter_original'
-                if st.button(f"Clear stored fire design parameter from Session State"):
-                    if key_to_clear in st.session_state:
-                        del st.session_state[key_to_clear]
-                        st.write(f"'{key_to_clear}' has been cleared from session state.")
-                    else:
-                        st.write(f"'{key_to_clear}' is not in session state.")
-
-                key_to_clear = 'fire_parameter_alt'
-                if st.button(f"Clear stored fire design parameter of alternative design from Session State"):
-                    if key_to_clear in st.session_state:
-                        del st.session_state[key_to_clear]
-                        st.write(f"'{key_to_clear}' has been cleared from session state.")
-                    else:
-                        st.write(f"'{key_to_clear}' is not in session state.")
 
             st.markdown("---")
+
+            option_analysis_type = st.session_state.option_analysis_type
+
+            if st.checkbox("Reset to default parameter (Construction cost)", value=False):
+                option_analysis_type = 'Start a new analysis'
+                st.write('**The restored input parameter would not be applied**')
+
             # Set up the input for Column Type selected by users
             if option_analysis_type == 'Start a new analysis':
                 BI_saved = 1
@@ -97,14 +80,12 @@ def show():
                     BI_saved=st.session_state.BI
                 else:
                     BI_saved=1
+            print(option_analysis_type,BI_saved)
 
+            # BI = BI_saved
+            BI = st.number_input("Input Building index (start from 1)",value=BI_saved, step=1)
 
-            BI = BI_saved
-            BI = st.number_input("Input Building index (start from 1)",value=BI_saved, step=1, key=f"temp_{BI}",
-                           on_change=update_session_state,
-                           args=(BI,))
-
-            # st.session_state.BI = BI  # Attribute API
+            st.session_state.BI = BI  # Attribute API
             # Set up the basic non-editable building parameter
             building_index = BI
             Building_type = int(building_information_ori[building_index - 1][8])
@@ -239,6 +220,8 @@ def show():
                 uploaded_file_cost = default_cost_file
 
             data_frame = pd.read_csv(uploaded_file_cost)
+            st.session_state.uploaded_file_cost=data_frame
+
             # get the column cost arrays
             column_tabular = np.asarray(data_frame.iloc[0:15, 0:8], float)
             # get the indices for different fire protection materials
@@ -255,6 +238,7 @@ def show():
             beam_fire_labor_tabular = np.asarray(data_frame.iloc[0:5, 26:33])
             # sf material labor hour
             unit_labor_beam=float(beam_fire_labor_tabular[2,6])
+            print(unit_labor_beam)
             unit_material_fireprotection = float(beam_fire_labor_tabular[2, 5])
             unit_labor_fluted_deck=beam_fire_labor_tabular[3,6]
             unit_material_fluted_deck = beam_fire_labor_tabular[3, 5]
