@@ -13,8 +13,6 @@ st.set_page_config(
 st.write("# Welcome to PBSFD project! 👋")
 
 # Streamlit app
-st.markdown('### **Enter the path for saving the files**')
-# User input for the save path
 
 if st.button(f"Click to show the saved path"):
     st.markdown('**All the downloaded files would be stored at the default path you specified in the browser**')
