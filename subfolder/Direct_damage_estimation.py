@@ -3,6 +3,7 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+import math
 import pickle
 from functions import column_cost_calculation, floor_system_cost,fire_service_cost,calculate_fireprotection_cost
 import matplotlib.pyplot as plt
@@ -21,9 +22,9 @@ def show():
         st.markdown("## **User Input Parameter**")
 
         building_parameter_original= st.session_state.building_parameter_original
-        building_area=building_parameter_original[0, 'Total area']
+        building_area=building_parameter_original['Total area'][0]
         Severe_fire_pro_saved = 25.6
-        Compartment_num_saved=building_area/1000
+        Compartment_num_saved=math.ceil(building_area/1000)
         study_year_saved = 50
         fragility_num_saved = 1
         muq_saved = 780
