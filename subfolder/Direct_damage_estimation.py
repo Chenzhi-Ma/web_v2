@@ -84,8 +84,8 @@ def show():
         # Display a text astreamrea for the user to input the array
 
         construction_cost_df = st.session_state.construction_cost_df
-        CI = construction_cost_df['Floor'][0] + construction_cost_df['Column'][0]
-
+        CI = (construction_cost_df['Floor'][0] + construction_cost_df['Column'][0])/Compartment_num+19.2*1000
+        print(Compartment_num,CI)
         if option_analysis_type == 'Load session variables':
             if 'fragility_parameter_original' in st.session_state:
                 damage_state_cost_value=damage_state_cost_value_saved
@@ -102,7 +102,7 @@ def show():
                     except ValueError:
                         st.write("Invalid input. Please enter a valid comma-separated list of numbers.")
                 else:
-                    damage_state_cost_value=[1.00*CI,10.00*CI,100.00*CI,1000.00*CI]
+                    damage_state_cost_value=[0.24*CI, 0.91*CI,1.66*CI,100.00*CI]
                     st.write("Default damage state cost value:", damage_state_cost_value)
 
         if option_analysis_type == 'Start a new analysis':
@@ -116,7 +116,7 @@ def show():
                 except ValueError:
                     st.write("Invalid input. Please enter a valid comma-separated list of numbers.")
             else:
-                damage_state_cost_value=[1.00*CI,10.00*CI,100.00*CI,1000.00*CI]
+                damage_state_cost_value=[0.24*CI, 0.91*CI,1.66*CI,100.00*CI]
                 st.write("Default damage state cost value:", damage_state_cost_value)
 
 
@@ -175,8 +175,9 @@ def show():
                             st.write("Invalid input. Please enter a valid comma-separated list of numbers.")
                     else:
                         construction_cost_df_alt = st.session_state.construction_cost_df_alt
-                        CI_alt = construction_cost_df_alt['Floor'][0] + construction_cost_df_alt['Column'][0]
-                        damage_state_cost_value_alt = [1.00 * CI_alt, 10.00 * CI_alt, 100.00 * CI_alt, 1000.00 * CI_alt]
+
+                        CI_alt = (construction_cost_df_alt['Floor'][0] + construction_cost_df_alt['Column'][0])/Compartment_num+19.2 * 1000
+                        damage_state_cost_value_alt = [0.24 * CI_alt, 0.91 * CI_alt, 1.66 * CI_alt, 100.00 * CI_alt]
                         st.write("Default damage state cost value alt.:", damage_state_cost_value_alt)
 
 
@@ -199,8 +200,9 @@ def show():
                         st.write("Invalid input. Please enter a valid comma-separated list of numbers.")
                 else:
                     construction_cost_df_alt = st.session_state.construction_cost_df_alt
-                    CI_alt = construction_cost_df_alt['Floor'][0] + construction_cost_df_alt['Column'][0]
-                    damage_state_cost_value_alt = [1.00 * CI_alt, 10.00 * CI_alt, 100.00 * CI_alt, 1000.00 * CI_alt]
+                    CI_alt = (construction_cost_df_alt['Floor'][0] + construction_cost_df_alt['Column'][
+                        0]) / Compartment_num + 19.2 * 1000
+                    damage_state_cost_value_alt = [0.24 * CI_alt, 0.91 * CI_alt, 1.66 * CI_alt, 100.00 * CI_alt]
                     st.write("Default damage state cost value alt.:", damage_state_cost_value_alt)
 
 
