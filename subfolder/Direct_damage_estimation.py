@@ -20,11 +20,13 @@ def show():
         # Set up the part for user input file
         st.markdown("## **User Input Parameter**")
 
-        Severe_fire_pro_saved = 0.97
-        Compartment_num_saved=100
+        building_parameter_original= st.session_state.building_parameter_original
+        building_area=building_parameter_original[0, 'Total area']
+        Severe_fire_pro_saved = 25.6
+        Compartment_num_saved=building_area/1000
         study_year_saved = 50
         fragility_num_saved = 1
-        muq_saved = 420
+        muq_saved = 780
         sigmaq_saved = 120
 
         option_analysis_type = st.session_state.option_analysis_type
@@ -225,7 +227,7 @@ def show():
             'Annual loss': [int(Annual_loss)],
             'Study year': [int(study_year)],
             'Study year loss': [int(Annual_loss*study_year)],
-            'Severe fire frequency per compartment (*10-7)': [int(Severe_fire_pro)],
+            'Severe fire frequency per compartment (*10-7)': [Severe_fire_pro],
         }
         direct_damage_loss = pd.DataFrame(data)
 
@@ -281,7 +283,7 @@ def show():
                 'Annual loss': [int(Annual_loss_alt)],
                 'Study year': [int(study_year)],
                 'Study year loss': [int(Annual_loss_alt * study_year)],
-                'Severe fire frequency per compartment (*10-7)': [int(Severe_fire_pro)],
+                'Severe fire frequency per compartment (*10-7)': [Severe_fire_pro],
             }
             direct_damage_loss_alt = pd.DataFrame(data_alt)
             st.write(" Summary for alternative design")

@@ -194,7 +194,7 @@ def show():
         st.write("---")
         data = {
             'Rent loss': [int(rent_loss)],
-            'Cobenefit': [Cobenefits_value],
+           # 'Cobenefit': [Cobenefits_value],
             'GWP(CO_2)': [int(total_sfrm_cost_original)],
         }
         Cobenefits_value_df = pd.DataFrame(data)
@@ -222,7 +222,7 @@ def show():
                 st.write("**Results for alternative design**")
                 data = {
                     'Rent loss': [int(rent_loss_alt)],
-                    'Cobenefit': [Cobenefits_value_alt],
+                    #'Cobenefit': [Cobenefits_value_alt],
                     'GWP(CO_2)': [int(total_sfrm_cost_alt)],
 
                 }
