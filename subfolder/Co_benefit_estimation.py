@@ -175,16 +175,19 @@ def show():
         st.write('---')
         cobenefits_method = st.selectbox(
             'How would you like to define other potential co-benefit',
-            ('input own value','Default method' ))
+            ('Default method' ,'input own value'))
         Cobenefits_value=0
         if cobenefits_method == 'Default method':
             st.write("you select default method")
+            Cobenefits_value = 0
         if cobenefits_method == 'input own value':
             Cobenefits_value = st.number_input("Input co-benefits")
 
         if alter_design:
+
             if cobenefits_method == 'Default method':
                 st.write("you select default method")
+                Cobenefits_value_alt=0
             if cobenefits_method == 'input own value':
                 Cobenefits_value_alt = st.number_input("Input co-benefits (alt.)")
 
@@ -194,8 +197,8 @@ def show():
         st.write("---")
         data = {
             'Rent loss': [int(rent_loss)],
-           # 'Cobenefit': [Cobenefits_value],
             'GWP(CO_2)': [int(total_sfrm_cost_original)],
+            'Cobenefit': [int(Cobenefits_value)],
         }
         Cobenefits_value_df = pd.DataFrame(data)
 
@@ -222,8 +225,8 @@ def show():
                 st.write("**Results for alternative design**")
                 data = {
                     'Rent loss': [int(rent_loss_alt)],
-                    #'Cobenefit': [Cobenefits_value_alt],
                     'GWP(CO_2)': [int(total_sfrm_cost_alt)],
+                    'Cobenefit': [int(Cobenefits_value_alt)],
 
                 }
                 Cobenefits_value_alt_df = pd.DataFrame(data)

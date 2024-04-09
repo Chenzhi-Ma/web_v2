@@ -127,11 +127,11 @@ def show():
         if fire_load_distribution=='Use given distribution (gumbel distribution)':
             col1, col2 = st.columns(2)
             with col1:
-                muq = st.number_input("Input location parameter", value=muq_saved)
+                muq = st.number_input("Input mean value", value=muq_saved)
             with col2:
-                sigmaq = st.number_input("Input scale parameter", value=sigmaq_saved)
+                sigmaq = st.number_input("Input standard deviation", value=sigmaq_saved)
             # Generate 1000 random numbers from the gumbel distribution
-            qfuel = np.random.gumbel(loc=muq, scale=sigmaq,size=10000)
+            qfuel = np.random.gumbel(loc=muq-0.57721*sigmaq*math.sqrt(6)/math.pi, scale=sigmaq*math.sqrt(6)/math.pi,size=10000)
 
         if fire_load_distribution=='Upload file':
             uploaded_file_fire = st.file_uploader("Choose a file")
@@ -162,7 +162,7 @@ def show():
                     fragility_num_alt_saved = fragility_parameter_alt.at[0, 'Index of the fragility curves for alt.']
                     damage_state_cost_value_alt_saved = fragility_parameter_alt.at[0, 'Damage cost value for alt.']
                     damage_state_cost_value_alt = damage_state_cost_value_alt_saved
-                    st.write("Stored damage state cost value:", damage_state_cost_value_alt)
+                    st.write("Stored damage state cost value:", math.ceil(damage_state_cost_value_alt))
                 else:
                     damage_state_cost_value_alt = st.text_area("Enter your damage state value (comma-separated) alt.:")
                     # Process the input and convert it into a NumPy array
@@ -170,7 +170,7 @@ def show():
                         try:
                             input_list = [float(item.strip()) for item in damage_state_cost_value_alt.split(',')]
                             damage_state_cost_value_alt = np.array(input_list)
-                            st.write("Input damage state cost value for alt.:", damage_state_cost_value_alt)
+                            st.write("Input damage state cost value for alt.:", math.ceil(damage_state_cost_value_alt))
                         except ValueError:
                             st.write("Invalid input. Please enter a valid comma-separated list of numbers.")
                     else:
@@ -178,7 +178,7 @@ def show():
 
                         CI_alt = (construction_cost_df_alt['Floor'][0] + construction_cost_df_alt['Column'][0])/Compartment_num+19.2 * 1000
                         damage_state_cost_value_alt = [0.24 * CI_alt, 0.91 * CI_alt, 1.66 * CI_alt, 100.00 * CI_alt]
-                        st.write("Default damage state cost value alt.:", damage_state_cost_value_alt)
+                        st.write("Default damage state cost value alt.:", math.ceil(damage_state_cost_value_alt))
 
 
             fragility_num_alt = st.number_input("Input the index of the built-in fragility curves (alt.)", step=1,value=fragility_num_alt_saved, max_value=10,min_value=1)
