@@ -17,7 +17,7 @@ def show():
     st.header("Economic impact of performance-based structural fire design")
 
 
-    with st.sidebar:
+    with (st.sidebar):
         # Set up the part for user input file
         st.markdown("## **User Input Parameter**")
 
@@ -85,11 +85,11 @@ def show():
 
         construction_cost_df = st.session_state.construction_cost_df
         CI = (construction_cost_df['Floor'][0] + construction_cost_df['Column'][0])/Compartment_num+19.2*1000
-        print(Compartment_num,CI)
+
         if option_analysis_type == 'Load session variables':
             if 'fragility_parameter_original' in st.session_state:
                 damage_state_cost_value=damage_state_cost_value_saved
-                print(option_analysis_type)
+
                 st.write("Stored damage state cost value:", damage_state_cost_value)
             else:
                 damage_state_cost_value = st.text_area("Enter your damage state value (comma-separated):")
@@ -147,6 +147,57 @@ def show():
 
         damage_value = np.interp(qfuel, hazard_intensity, vulnerability_data)
         damage_value_average=np.average(damage_value)
+        environment_impact=st.checkbox("Considering the lifetime environmental impact?",value=False)
+        st.session_state.environment_impact = environment_impact
+
+        if environment_impact:
+            st.write('**Input the contribution of material at each damage state**')
+            input_data = {}
+
+            # Define the number of rows
+            rows = 4
+
+            # Column headers
+            default_material_proportion = {
+                'Content': [0.77, 0.22, 0.22, 0.22],
+                'Steel': [0.00, 0.27, 0.50, 0.50],
+                'Concrete': [0.00, 0.21, 0.14, 0.14]
+            }
+            # Create input fields with custom column headers and dynamic default values
+            for i in range(rows):
+                cols = st.columns(len(default_material_proportion))
+                for j, (header, defaults) in enumerate(default_material_proportion.items()):
+                    with cols[j]:
+                        # Create a unique key for each input based on row and column
+                        key = f"{header} {i + 1}"
+                        # Ensure the row index does not exceed the list of defaults
+                        if i < len(defaults):
+                            default_value = defaults[i]
+                        else:
+                            default_value = ""  # Or any other fallback default value
+                        # Collect the input data using text input with a dynamic default value
+                        input_data[key] = st.text_input(f"{header} (DS{i + 1})", value=default_value, key=key)
+
+            # Display collected inputs
+            st.write("Collected Inputs:")
+            st.write(input_data)
+
+            vulnerability_data1_material = np.zeros(size_fragility[0])
+            vulnerability_data_material = np.zeros((3,size_fragility[0]))
+            damage_value_material = np.zeros((3,qfuel.shape[0]))
+            damage_value_material_average=np.zeros(4)
+            for j, (header, defaults) in enumerate(default_material_proportion.items()):
+                for i in range(damage_state_num -1, 0, -1):
+                    vulnerability_data1_material += np.maximum((-fragility_prob[:, i] + fragility_prob[:, i - 1]), 0) * defaults[i-1]*damage_state_cost_value[i-1]
+                vulnerability_data_material[j,:] = np.maximum(fragility_prob[:, damage_state_num - 1], 0) * defaults[
+                    damage_state_num - 1]*damage_state_cost_value[damage_state_num-1] + vulnerability_data1_material
+
+            for i in range(0,3,1):
+                damage_value_material[i,:] = np.interp(qfuel, hazard_intensity, vulnerability_data_material[i,:])
+            damage_value_material_average = np.average(damage_value_material,1)
+
+
+
         st.markdown("**parameters for alternative design**")
         #alter_design = st.checkbox('Do you want to get damage cost value for alternative design?')
         if "alter_design" in st.session_state:
@@ -162,7 +213,8 @@ def show():
                     fragility_num_alt_saved = fragility_parameter_alt.at[0, 'Index of the fragility curves for alt.']
                     damage_state_cost_value_alt_saved = fragility_parameter_alt.at[0, 'Damage cost value for alt.']
                     damage_state_cost_value_alt = damage_state_cost_value_alt_saved
-                    st.write("Stored damage state cost value:", math.ceil(damage_state_cost_value_alt))
+                    print(damage_state_cost_value_alt)
+                    st.write("Stored damage state cost value:", np.array(damage_state_cost_value_alt,dtype=int))
                 else:
                     damage_state_cost_value_alt = st.text_area("Enter your damage state value (comma-separated) alt.:")
                     # Process the input and convert it into a NumPy array
@@ -217,6 +269,21 @@ def show():
 
             damage_value_alt = np.interp(qfuel, hazard_intensity, vulnerability_data_alt)
             damage_value_average_alt = np.average(damage_value_alt)
+            if environment_impact:
+                vulnerability_data1_material_alt = np.zeros(size_fragility[0])
+                vulnerability_data_material_alt = np.zeros((3, size_fragility[0]))
+                damage_value_material_alt = np.zeros((3, qfuel.shape[0]))
+                damage_value_material_average_alt = np.zeros(4)
+                for j, (header, defaults) in enumerate(default_material_proportion.items()):
+                    for i in range(damage_state_num - 1, 0, -1):
+                        vulnerability_data1_material_alt += np.maximum((-fragility_prob_alt[:, i] + fragility_prob_alt[:, i - 1]), 0) * \
+                                                        defaults[i - 1] * damage_state_cost_value[i - 1]
+                    vulnerability_data_material_alt[j, :] = np.maximum(fragility_prob_alt[:, damage_state_num - 1], 0) * defaults[
+                        damage_state_num - 1] * damage_state_cost_value[damage_state_num - 1] + vulnerability_data1_material_alt
+
+                for i in range(0, 3, 1):
+                    damage_value_material_alt[i, :] = np.interp(qfuel, hazard_intensity, vulnerability_data_material_alt[i, :])
+                damage_value_material_average_alt = np.average(damage_value_material_alt, 1)
 
     with st.container():
         st.subheader('Results')
@@ -234,7 +301,15 @@ def show():
         }
         direct_damage_loss = pd.DataFrame(data)
 
-        # st.write(" Summary for reference design")
+        if environment_impact:
+            ei_cost = {
+                'Average content loss per sever fire': [int(damage_value_material_average[0])],
+                'Average steel loss per sever fire': [int(damage_value_material_average[1])],
+                'Average concrete loss per sever fire': [int(damage_value_material_average[2])],
+            }
+            st.session_state.ei_cost = ei_cost
+
+            # st.write(" Summary for reference design")
 
         f1 = plt.figure(figsize=(4, 12), dpi=300)
         # two subplots are adopted
@@ -272,12 +347,14 @@ def show():
         with col1:
             st.write("**Results for reference design**")
             st.dataframe(direct_damage_loss, use_container_width=True, hide_index=True)
+            if environment_impact:
+                st.dataframe(ei_cost)
             st.session_state.direct_damage_loss = direct_damage_loss  # Attribute API
             st.pyplot(f1)
 
         if alter_design:
 
-            st.write("## results for alternative design")
+            #st.write("## results for alternative design")
 
             Annual_loss_alt = Severe_fire_pro * damage_value_average_alt * 10e-7 * Compartment_num
             data_alt = {
@@ -287,10 +364,18 @@ def show():
                 'Study year': [int(study_year)],
                 'Study year loss': [int(Annual_loss_alt * study_year)],
                 'Severe fire frequency per compartment (*10-7)': [Severe_fire_pro],
+
             }
             direct_damage_loss_alt = pd.DataFrame(data_alt)
-            st.write(" Summary for alternative design")
+            #st.write(" Summary for alternative design")
 
+            if environment_impact:
+                ei_cost_alt = {
+                    'Average content loss per sever fire':[int(damage_value_material_average_alt[0])],
+                    'Average steel loss per sever fire':[int(damage_value_material_average_alt[1])],
+                    'Average concrete loss per sever fire':[int(damage_value_material_average_alt[2])],
+                }
+                st.session_state.ei_cost_alt = ei_cost_alt
 
             f2 = plt.figure(figsize=(4, 12), dpi=300)
             # two subplots are adopted
@@ -326,6 +411,9 @@ def show():
             with col2:
                 st.write("**Results for alternative design**")
                 st.dataframe(direct_damage_loss_alt, use_container_width=True, hide_index=True)
+
+                if environment_impact:
+                    st.dataframe(ei_cost_alt)
                 st.session_state.direct_damage_loss_alt = direct_damage_loss_alt  # Attribute API
                 st.pyplot(f2)
 

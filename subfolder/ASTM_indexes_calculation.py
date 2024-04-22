@@ -26,6 +26,12 @@ def show():
         else:
             alter_design=[]
 
+        if "environment_impact" in st.session_state:
+            environment_impact=st.session_state.environment_impact
+        else:
+            environment_impact=[]
+
+
         if astm_index_method == 'Based on previous data':
             construction_cost_df=st.session_state.construction_cost_df
             CI_ref=construction_cost_df['Floor'][0]+construction_cost_df['Column'][0]
@@ -145,6 +151,17 @@ def show():
             astm_index = pd.DataFrame(data)
             st.dataframe(data, use_container_width=True, hide_index=True)
             st.session_state.astm_index = astm_index
+            print(environment_impact)
+            if environment_impact:
+                environmental_impact_df=st.session_state.environmental_impact_df
+                environmental_impact_df_alt=st.session_state.environmental_impact_df_alt
+
+
+                data_environment = pd.concat([environmental_impact_df['Total'], environmental_impact_df_alt['Total']], axis=1,
+                                             keys=['Total_Reference', 'Total_Alternative'])
+                st.markdown("### Environment impact for the two designs")
+                st.dataframe(data_environment)
+
         else:
             data = {
                 '': ['Reference design'],

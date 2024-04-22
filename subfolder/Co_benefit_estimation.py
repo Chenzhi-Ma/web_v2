@@ -11,7 +11,7 @@ def show():
 
     st.header("Economic impact of performance-based structural fire design")
 
-    with (((st.sidebar))):
+    with st.sidebar:
         # Set up the part for user input file
         if "alter_design" in st.session_state:
             alter_design = st.session_state.alter_design
@@ -25,8 +25,6 @@ def show():
         if st.checkbox("Reset to default parameter (Co-benefit)",value=False):
             option_analysis_type='Start a new analysis'
             st.write('**The restored input parameter would not be applied**')
-
-
 
         rent_loss_selection = st.checkbox("Run the rent loss analysis",value=True)
         rent_loss = 0
@@ -72,6 +70,7 @@ def show():
             Unit_rent_loss = st.number_input("Input rent rate month per sq.ft", value=Unit_rent_loss_saved)
             number_crew = st.number_input("Input number of crew G-2 working on applying fire protection on steelwork",
                                           value=number_crew_saved, step=1)
+
             Cure_time = st.number_input("Input hours needed to cure the fire protection on steelwork (hr)", value=Cure_time_saved,
                                         step=1)
             per_rented=st.number_input("Input the percentage of area that has been rented",
@@ -80,7 +79,9 @@ def show():
                                          # value=Affect_area)
 
             construction_cost_df = st.session_state.construction_cost_df
+
             total_labor_hour = construction_cost_df['Floor'][2] + construction_cost_df['Column'][2]
+
             rent_loss = (total_labor_hour / number_crew + Cure_time) * Unit_rent_loss / 24 / 30 * Affect_area*per_rented
 
             # alter_design = st.checkbox('Do you want to get indirect damage cost value for alternative design?')
@@ -108,6 +109,10 @@ def show():
 
         GWP_selection = st.checkbox("Run the global warming analysis", value=True)
         if GWP_selection:
+            unit_cost_data=st.session_state.uploaded_file_cost
+            environmental_impact_table = np.asarray(unit_cost_data.iloc[2:25, 38:41], float)
+            environmental_impact_name = np.asarray(unit_cost_data.iloc[2:25, 36])
+            environmental_impact_unit = np.asarray(unit_cost_data.iloc[2:25, 37])
             GWP_analysis_type = st.selectbox(
                 "Analysis type",
                 ('Default value','Input own value'),
@@ -132,15 +137,48 @@ def show():
                                        construction_cost_df_updated.at[0, 'Column']/beam_unit_material_cost*beam_sfrm_unit_volume*\
                                        column_f_density*0.4536/1000*column_f_gwp
 
+            ei_cost = st.session_state.ei_cost
+            content_cost = ei_cost['Average content loss per sever fire'][0]
+            steel_cost = ei_cost['Average steel loss per sever fire'][0]
+            concrete_cost = ei_cost['Average concrete loss per sever fire'][0]
+
+
+            CPI_inflation_till_now = st.number_input("Input the CPI inflation from 2013 till now(https://www.bls.gov/data/inflation_calculator.htm)", value=1.36)
+
+            content_ei=content_cost/CPI_inflation_till_now*environmental_impact_table[:,0]
+            steel_ei=steel_cost/CPI_inflation_till_now*environmental_impact_table[:,1]
+            concrete_ei=concrete_cost/CPI_inflation_till_now*environmental_impact_table[:,2]
+
+            namep1 = pd.DataFrame({
+                'Impact name': [environmental_impact_name]
+            })
+
+            namep2 = pd.DataFrame({
+                'Unit': [environmental_impact_unit]
+            })
+            row_names = namep1['Impact name'][0] + '-' + namep2['Unit'][0]
+
+            environmental_impact_df = pd.DataFrame({
+                'Total':np.array(content_ei,dtype=int)+np.array(steel_ei,dtype=int)+np.array(concrete_ei,dtype=int),
+                'Content': np.array(content_ei,dtype=int),
+                'Steel': np.array(steel_ei,dtype=int),
+                'Conrete': np.array(concrete_ei,dtype=int)
+            }, index=row_names)
+
+            st.session_state.environmental_impact_df=environmental_impact_df
 
 
             if alter_design:
                 st.markdown('---')
                 st.markdown('### Parameter for alternative design:')
-
+                number_crew_reinf = st.number_input("Input number of Rodmen (reinf.) ",
+                                                    value=2, step=1)
                 construction_cost_df_alt = st.session_state.construction_cost_df_alt
+                extra_cost_df = st.session_state.extra_cost_df
+                extra_labor = extra_cost_df['Extra labor alt. (hour)'][0]
                 total_labor_hour_alt = construction_cost_df_alt['Floor'][2] + construction_cost_df_alt['Column'][2]
-                rent_loss_alt = (total_labor_hour_alt / number_crew + Cure_time) * Unit_rent_loss / 24 / 30 * Affect_area*per_rented
+                rent_loss_alt = (total_labor_hour_alt / number_crew + Cure_time+extra_labor*2/number_crew_reinf) * Unit_rent_loss / 24 / 30 * Affect_area*per_rented
+
                 Cobenefits_value_alt = 0
                 construction_cost_df_updated_alt = st.session_state.construction_cost_df_alt
                 fire_parameter_alt = st.session_state.fire_parameter_original   # Attribute API
@@ -170,6 +208,37 @@ def show():
                                                beam_f_density_alt*0.4536/1000*beam_f_gwp_alt+\
                                                construction_cost_df_updated_alt.at[0, 'Column']/beam_unit_material_cost*beam_sfrm_unit_volume*\
                                                column_f_density_alt*0.4536/1000*column_f_gwp_alt
+
+                    ei_cost_alt = st.session_state.ei_cost_alt
+
+                    content_cost_alt = ei_cost_alt['Average content loss per sever fire'][0]
+                    steel_cost_alt = ei_cost_alt['Average steel loss per sever fire'][0]
+                    concrete_cost_alt = ei_cost_alt['Average concrete loss per sever fire'][0]
+
+
+
+                    content_ei_alt = content_cost_alt / CPI_inflation_till_now * environmental_impact_table[:, 0]
+                    steel_ei_alt = steel_cost_alt / CPI_inflation_till_now * environmental_impact_table[:, 1]
+                    concrete_ei_alt = concrete_cost_alt / CPI_inflation_till_now * environmental_impact_table[:, 2]
+
+                    namep1 = pd.DataFrame({
+                        'Impact name': [environmental_impact_name]
+                    })
+
+                    namep2 = pd.DataFrame({
+                        'Unit': [environmental_impact_unit]
+                    })
+                    row_names = namep1['Impact name'][0] + '-' + namep2['Unit'][0]
+
+                    environmental_impact_df_alt = pd.DataFrame({
+                        'Total': np.array(content_ei_alt, dtype=int) + np.array(steel_ei_alt, dtype=int) + np.array(concrete_ei_alt,
+                                                                                                            dtype=int),
+                        'Content': np.array(content_ei_alt, dtype=int),
+                        'Steel': np.array(steel_ei_alt, dtype=int),
+                        'Conrete': np.array(concrete_ei_alt, dtype=int)
+                    }, index=row_names)
+
+                    st.session_state.environmental_impact_df_alt = environmental_impact_df_alt
 
 
         st.write('---')
@@ -220,6 +289,13 @@ def show():
 
             st.dataframe(Cobenefits_value_df, use_container_width=True, hide_index=True)
             st.session_state.Cobenefits_value_df = Cobenefits_value_df  # Attribute API
+
+
+
+        st.write("**Full environment impact for reference design**")
+        st.dataframe(environmental_impact_df, use_container_width=True, hide_index=False)
+
+
         if alter_design:
             with col2:
                 st.write("**Results for alternative design**")
@@ -233,5 +309,8 @@ def show():
 
                 st.dataframe(Cobenefits_value_alt_df, use_container_width=True, hide_index=True)
                 st.session_state.Cobenefits_value_df_alt = Cobenefits_value_alt_df  # Attribute API
+
+            st.write("**Full environment impact for alternative design**")
+            st.dataframe(environmental_impact_df_alt, use_container_width=True, hide_index=False)
 
 
