@@ -9,21 +9,19 @@ from functions import column_cost_calculation, floor_system_cost,fire_service_co
 import matplotlib.pyplot as plt
 
 def show():
+
+
     st.title('Direct Damage Estimation')
-
-
-
-
     st.header("Economic impact of performance-based structural fire design")
 
 
-    with (st.sidebar):
+    with st.sidebar:
         # Set up the part for user input file
         st.markdown("## **User Input Parameter**")
 
         building_parameter_original= st.session_state.building_parameter_original
         building_area=building_parameter_original['Total area'][0]
-        Severe_fire_pro_saved = 25.6
+        Severe_fire_pro_saved = 2.6
         Compartment_num_saved=math.ceil(building_area/1000)
         study_year_saved = 50
         fragility_num_saved = 1
@@ -45,15 +43,13 @@ def show():
         if option_analysis_type == 'Load session variables':
             if 'fragility_parameter_original' in st.session_state:
                 fragility_parameter_original = st.session_state.fragility_parameter_original
-                Severe_fire_pro_saved = fragility_parameter_original.at[0, 'Probability of severe fire (*10-7)']
-                Compartment_num_saved = fragility_parameter_original.at[0, 'Number of compartment']
+                Severe_fire_pro_saved = fragility_parameter_original.at[0, 'Probability of severe fire']
                 fragility_num_saved = fragility_parameter_original.at[0, 'Index of the fragility curves']
                 muq_saved = fragility_parameter_original.at[0, 'Location parameter of fire load (mu)']
                 sigmaq_saved = fragility_parameter_original.at[0, 'Scale parameter of fire load (sigma)']
                 damage_state_cost_value_saved = fragility_parameter_original.at[0, 'Damage cost value']
 
-        Severe_fire_pro = st.number_input("Input probability of severe fire in a compartment (*10-7)", value=Severe_fire_pro_saved)
-        Compartment_num = st.number_input("Input number of compartment", value=Compartment_num_saved)
+        Severe_fire_pro = st.number_input("Input probability of severe fire per million sq.ft (*1e-9/sq.ft)", value=Severe_fire_pro_saved)
         study_year=study_year_saved
         # study_year = st.number_input("Input study year of the building", value=study_year_saved)
 
@@ -82,9 +78,10 @@ def show():
             fragility_prob = np.asarray(fragility_curve.iloc[:, lower_bound:upper_bound])
 
         # Display a text astreamrea for the user to input the array
+        st.session_state.fragility_curve=fragility_curve
 
         construction_cost_df = st.session_state.construction_cost_df
-        CI = (construction_cost_df['Floor'][0] + construction_cost_df['Column'][0])/Compartment_num+19.2*1000
+        CI = (construction_cost_df['Floor'][0] + construction_cost_df['Column'][0])/Compartment_num_saved+19.2*1000
 
         if option_analysis_type == 'Load session variables':
             if 'fragility_parameter_original' in st.session_state:
@@ -153,10 +150,8 @@ def show():
         if environment_impact:
             st.write('**Input the contribution of material at each damage state**')
             input_data = {}
-
             # Define the number of rows
             rows = 4
-
             # Column headers
             default_material_proportion = {
                 'Content': [0.77, 0.22, 0.22, 0.22],
@@ -198,6 +193,10 @@ def show():
 
 
 
+
+
+
+
         st.markdown("**parameters for alternative design**")
         #alter_design = st.checkbox('Do you want to get damage cost value for alternative design?')
         if "alter_design" in st.session_state:
@@ -213,7 +212,6 @@ def show():
                     fragility_num_alt_saved = fragility_parameter_alt.at[0, 'Index of the fragility curves for alt.']
                     damage_state_cost_value_alt_saved = fragility_parameter_alt.at[0, 'Damage cost value for alt.']
                     damage_state_cost_value_alt = damage_state_cost_value_alt_saved
-                    print(damage_state_cost_value_alt)
                     st.write("Stored damage state cost value:", np.array(damage_state_cost_value_alt,dtype=int))
                 else:
                     damage_state_cost_value_alt = st.text_area("Enter your damage state value (comma-separated) alt.:")
@@ -222,7 +220,7 @@ def show():
                         try:
                             input_list = [float(item.strip()) for item in damage_state_cost_value_alt.split(',')]
                             damage_state_cost_value_alt = np.array(input_list)
-                            st.write("Input damage state cost value for alt.:", math.ceil(damage_state_cost_value_alt))
+                            st.write("Input damage state cost value for alt.:", np.array(damage_state_cost_value_alt,dtype=int))
                         except ValueError:
                             st.write("Invalid input. Please enter a valid comma-separated list of numbers.")
                     else:
@@ -230,7 +228,8 @@ def show():
 
                         CI_alt = (construction_cost_df_alt['Floor'][0] + construction_cost_df_alt['Column'][0])/Compartment_num+19.2 * 1000
                         damage_state_cost_value_alt = [0.24 * CI_alt, 0.91 * CI_alt, 1.66 * CI_alt, 100.00 * CI_alt]
-                        st.write("Default damage state cost value alt.:", math.ceil(damage_state_cost_value_alt))
+                        print(damage_state_cost_value_alt)
+                        st.write("Default damage state cost value alt.:", np.array(damage_state_cost_value_alt,dtype=int))
 
 
             fragility_num_alt = st.number_input("Input the index of the built-in fragility curves (alt.)", step=1,value=fragility_num_alt_saved, max_value=10,min_value=1)
@@ -253,10 +252,9 @@ def show():
                 else:
                     construction_cost_df_alt = st.session_state.construction_cost_df_alt
                     CI_alt = (construction_cost_df_alt['Floor'][0] + construction_cost_df_alt['Column'][
-                        0]) / Compartment_num + 19.2 * 1000
+                        0]) / Compartment_num_saved + 19.2 * 1000
                     damage_state_cost_value_alt = [0.24 * CI_alt, 0.91 * CI_alt, 1.66 * CI_alt, 100.00 * CI_alt]
                     st.write("Default damage state cost value alt.:", damage_state_cost_value_alt)
-
 
             vulnerability_data1_alt = np.zeros(size_fragility[0])
             vulnerability_data_alt = np.zeros(size_fragility[0])
@@ -269,6 +267,9 @@ def show():
 
             damage_value_alt = np.interp(qfuel, hazard_intensity, vulnerability_data_alt)
             damage_value_average_alt = np.average(damage_value_alt)
+
+            st.session_state.qfuel=qfuel
+
             if environment_impact:
                 vulnerability_data1_material_alt = np.zeros(size_fragility[0])
                 vulnerability_data_material_alt = np.zeros((3, size_fragility[0]))
@@ -285,19 +286,24 @@ def show():
                     damage_value_material_alt[i, :] = np.interp(qfuel, hazard_intensity, vulnerability_data_material_alt[i, :])
                 damage_value_material_average_alt = np.average(damage_value_material_alt, 1)
 
+
+
+
+
+
+
     with st.container():
         st.subheader('Results')
         st.write("---")
 
 
-        Annual_loss=Severe_fire_pro*damage_value_average*10e-7*Compartment_num
-
+        Annual_loss=Severe_fire_pro*damage_value_average*1e-9*building_area
         data = {
             'Average loss per severe fire': [int(damage_value_average)],
             'Annual loss': [int(Annual_loss)],
             'Study year': [int(study_year)],
             'Study year loss': [int(Annual_loss*study_year)],
-            'Severe fire frequency per compartment (*10-7)': [Severe_fire_pro],
+            'Severe fire frequency (*1e-9)': [Severe_fire_pro],
         }
         direct_damage_loss = pd.DataFrame(data)
 
@@ -356,14 +362,14 @@ def show():
 
             #st.write("## results for alternative design")
 
-            Annual_loss_alt = Severe_fire_pro * damage_value_average_alt * 10e-7 * Compartment_num
+            Annual_loss_alt = Severe_fire_pro * damage_value_average_alt * 1e-9 * building_area
             data_alt = {
 
                 'Average loss per severe fire': [int(damage_value_average_alt)],
                 'Annual loss': [int(Annual_loss_alt)],
                 'Study year': [int(study_year)],
                 'Study year loss': [int(Annual_loss_alt * study_year)],
-                'Severe fire frequency per compartment (*10-7)': [Severe_fire_pro],
+                'Severe fire frequency (*1e-9)': [Severe_fire_pro],
 
             }
             direct_damage_loss_alt = pd.DataFrame(data_alt)
@@ -425,8 +431,8 @@ def show():
             st.session_state.fragility_parameter_alt = fragility_parameter_alt  # Attribute API
 
         data = {
-            'Probability of severe fire (*10-7)': [Severe_fire_pro],
-            'Number of compartment': [Compartment_num],
+            'Probability of severe fire': [Severe_fire_pro],
+            'Number of compartment': [Compartment_num_saved],
             'Study year': [study_year],
             'Method of defining the fragility curves': [fragility_curve_method],
             'Index of the fragility curves': [fragility_num],

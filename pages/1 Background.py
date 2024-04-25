@@ -20,7 +20,7 @@ with st.expander('Description:', expanded=False):
        in the default RSMeans database are adjusted, such as the floor systems and fire rating on steelwork. <b>The fire rating for the steel 
        and composite structural members is adjusted based on the International Building Code (IBC) requirements.</b>
      ''',unsafe_allow_html=True)
-    tab1, tab2, tab3 = st.tabs(["**Floor system**", "**Column**", "**Other fire services**"
+    tab1, tab2, tab3 = st.tabs(["**Floor system**", "**Column**", "**Other fire safety measures**"
                                               ])
     with tab1:
         st.markdown(''' 
@@ -202,7 +202,7 @@ with st.expander('Method 1 & 2: Variation in the database:', expanded=False):
 
     with tab4:
         st.markdown(''' 
-        Enable interpolation: for the cost of other the fire services such as partition, sprinkler, 
+        Enable interpolation: for the cost of other the fire safety measures such as partition, sprinkler, 
         fire pump, alarm, and ceiling, these values can be obtained from the construction cost database 
         based on the prototypes in the RSMeans. **The newest value can be interpolated by the 
         floor area based on the known values in the database**.    

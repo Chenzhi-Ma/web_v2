@@ -121,7 +121,7 @@ def show():
                     building_parameter_original_saved=st.session_state.building_parameter_original
                     Building_para_modi_saved=building_parameter_original_saved.at[0, 'Modify default building parameter']
                     story_height_inp=building_parameter_original_saved.at[0, 'Story height']
-                    total_floor_area_inp=building_parameter_original_saved.at[0,  'Total area']
+                    #total_floor_area_inp=building_parameter_original_saved.at[0,  'Total area']
                     bayload_inp=building_parameter_original_saved.at[0,    'Bay load']
                     total_story = building_parameter_original_saved.at[0,  'Building stories']
                     baysize1_inp = building_parameter_original_saved.at[0, 'Bay size1']
@@ -137,10 +137,9 @@ def show():
                     story_height_inp = st.number_input("story height",value=story_height_inp, step=1)
                 with col2:
                     total_floor_area_inp = st.number_input("total floor area (sq.ft)",value=total_floor_area_inp)
-
                 if total_floor_area_inp<low_limit_area or total_floor_area_inp>up_limit_area:
                     st.write("Warning: ")
-                    st.write(f"The total floor area is out of the range in the database, the results on fire service except passive fire protection on steelworks might not be applicable. "
+                    st.write(f"The total floor area is out of the range in the database, the results on fire safety measures except passive fire protection on steelworks might not be applicable. "
                                   f"Min:{low_limit_area} Max:{up_limit_area}")
 
                 col1, col2 = st.columns(2)
@@ -151,7 +150,7 @@ def show():
 
                 if total_story<low_limit_story or total_story>up_limit_story:
                     st.write("Warning: ")
-                    st.write(f"The total story is out of the range in the database, the results on fire service except passive fire protection on steelworks might not be applicable. "
+                    st.write(f"The total story is out of the range in the database, the results on fire safety measures except passive fire protection on steelworks might not be applicable. "
                                   f"Min:{low_limit_story} Max:{up_limit_story}")
 
                 col1, col2 = st.columns(2)
@@ -562,7 +561,7 @@ def show():
             p7[1].set_edgecolor([0,0,1])
             ax7.set_xticks([1,2,3,4,5,6,7],('Beams','Columns','Partition','Sprinkler', 'Fire pump', 'Alarm', 'Ceiling'))
             ax7.set_ylabel('Cost ($)')
-            ax7.set_title('Original fire service cost')
+            ax7.set_title('Original fire safety measures cost')
 
 
             ax8 = ax7.twinx()

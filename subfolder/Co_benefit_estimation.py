@@ -11,6 +11,11 @@ def show():
 
     st.header("Economic impact of performance-based structural fire design")
 
+    if "environment_impact" in st.session_state:
+        environment_impact = st.session_state.environment_impact
+    else:
+        environment_impact = []
+
     with st.sidebar:
         # Set up the part for user input file
         if "alter_design" in st.session_state:
@@ -56,16 +61,6 @@ def show():
                     Cure_time_saved=72
                     per_rented_saved=0.5
 
-                if 'indirect_damage_alt' in st.session_state:
-                    indirect_damage_alt = st.session_state.indirect_damage_alt
-                    indirect_damage_loss_alt_saved = indirect_damage_alt.at[
-                        0, 'Indirect damage loss alt.']
-                else:
-                    indirect_damage_loss_alt_saved = 0
-
-
-
-
             # labor_hour_unit = st.number_input("Input labor hour needed for sq.ft fire protection")
             Unit_rent_loss = st.number_input("Input rent rate month per sq.ft", value=Unit_rent_loss_saved)
             number_crew = st.number_input("Input number of crew G-2 working on applying fire protection on steelwork",
@@ -83,6 +78,8 @@ def show():
             total_labor_hour = construction_cost_df['Floor'][2] + construction_cost_df['Column'][2]
 
             rent_loss = (total_labor_hour / number_crew + Cure_time) * Unit_rent_loss / 24 / 30 * Affect_area*per_rented
+
+            print(total_labor_hour,rent_loss)
 
             # alter_design = st.checkbox('Do you want to get indirect damage cost value for alternative design?')
             #st.markdown("**parameters for alternative design**")
@@ -107,8 +104,7 @@ def show():
         beam_f_gwp=int(GWP_material[fire_material_floor-1,1])
         column_f_gwp=int(GWP_material[fire_material_column-1,1])
 
-        GWP_selection = st.checkbox("Run the global warming analysis", value=True)
-        if GWP_selection:
+        if environment_impact:
             unit_cost_data=st.session_state.uploaded_file_cost
             environmental_impact_table = np.asarray(unit_cost_data.iloc[2:25, 38:41], float)
             environmental_impact_name = np.asarray(unit_cost_data.iloc[2:25, 36])
@@ -168,77 +164,78 @@ def show():
             st.session_state.environmental_impact_df=environmental_impact_df
 
 
-            if alter_design:
-                st.markdown('---')
-                st.markdown('### Parameter for alternative design:')
-                number_crew_reinf = st.number_input("Input number of Rodmen (reinf.) ",
-                                                    value=2, step=1)
-                construction_cost_df_alt = st.session_state.construction_cost_df_alt
-                extra_cost_df = st.session_state.extra_cost_df
-                extra_labor = extra_cost_df['Extra labor alt. (hour)'][0]
-                total_labor_hour_alt = construction_cost_df_alt['Floor'][2] + construction_cost_df_alt['Column'][2]
-                rent_loss_alt = (total_labor_hour_alt / number_crew + Cure_time+extra_labor*2/number_crew_reinf) * Unit_rent_loss / 24 / 30 * Affect_area*per_rented
+        if alter_design:
+            st.markdown('---')
+            st.markdown('### Parameter for alternative design:')
+            number_crew_reinf = st.number_input("Input number of Rodmen (reinf.) ",
+                                                value=4, step=1)
+            construction_cost_df_alt = st.session_state.construction_cost_df_alt
+            extra_cost_df = st.session_state.extra_cost_df
+            extra_labor = extra_cost_df['Extra labor alt. (hour)'][0]
+            total_labor_hour_alt = construction_cost_df_alt['Floor'][2] + construction_cost_df_alt['Column'][2]
+            rent_loss_alt = (total_labor_hour_alt / number_crew + Cure_time+extra_labor*2/number_crew_reinf) * Unit_rent_loss / 24 / 30 * Affect_area*per_rented
+            print(total_labor_hour_alt,rent_loss_alt,number_crew)
 
-                Cobenefits_value_alt = 0
-                construction_cost_df_updated_alt = st.session_state.construction_cost_df_alt
-                fire_parameter_alt = st.session_state.fire_parameter_original   # Attribute API
-                fire_material_floor_alt = fire_parameter_alt.at[0,'Beam fire protection material']
-                fire_material_column_alt = fire_parameter_alt.at[0, 'Column fire protection material']
+            Cobenefits_value_alt = 0
+            construction_cost_df_updated_alt = st.session_state.construction_cost_df_alt
+            fire_parameter_alt = st.session_state.fire_parameter_original   # Attribute API
+            fire_material_floor_alt = fire_parameter_alt.at[0,'Beam fire protection material']
+            fire_material_column_alt = fire_parameter_alt.at[0, 'Column fire protection material']
 
-                beam_f_density_alt = float(GWP_density[fire_material_floor_alt - 1])
-                column_f_density_alt = float(GWP_density[fire_material_column_alt - 1])
-                beam_f_gwp_alt = int(GWP_material[fire_material_floor_alt - 1, 1])
-                column_f_gwp_alt = int(GWP_material[fire_material_column_alt - 1, 1])
+            beam_f_density_alt = float(GWP_density[fire_material_floor_alt - 1])
+            column_f_density_alt = float(GWP_density[fire_material_column_alt - 1])
+            beam_f_gwp_alt = int(GWP_material[fire_material_floor_alt - 1, 1])
+            column_f_gwp_alt = int(GWP_material[fire_material_column_alt - 1, 1])
 
-                if GWP_selection:
-                    if GWP_analysis_type == 'Input own value':
-                        col1, col2 = st.columns(2)
-                        with col1:
-                            beam_f_density_alt = st.number_input("Input beam fire protection density for alt. pcf", value=20)
-                        with col2:
-                            column_f_density_alt = st.number_input("Input column fire protection density for alt. pcf", value=20)
-                        col1, col2 = st.columns(2)
-                        with col1:
-                            beam_f_gwp_alt = st.number_input("Input beam fire protection global warming (kg CO2 eq) per 1000kg unit material for alt.", value=500)
-                        with col2:
-                            column_f_gwp_alt = st.number_input("Input column fire protection global warming (kg CO2 eq) per 1000kg unit material for alt.", value=500)
-
-
-                    total_sfrm_cost_alt = construction_cost_df_updated_alt.at[0, 'Floor']/beam_unit_material_cost*beam_sfrm_unit_volume*\
-                                               beam_f_density_alt*0.4536/1000*beam_f_gwp_alt+\
-                                               construction_cost_df_updated_alt.at[0, 'Column']/beam_unit_material_cost*beam_sfrm_unit_volume*\
-                                               column_f_density_alt*0.4536/1000*column_f_gwp_alt
-
-                    ei_cost_alt = st.session_state.ei_cost_alt
-
-                    content_cost_alt = ei_cost_alt['Average content loss per sever fire'][0]
-                    steel_cost_alt = ei_cost_alt['Average steel loss per sever fire'][0]
-                    concrete_cost_alt = ei_cost_alt['Average concrete loss per sever fire'][0]
+            if environment_impact:
+                if GWP_analysis_type == 'Input own value':
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        beam_f_density_alt = st.number_input("Input beam fire protection density for alt. pcf", value=20)
+                    with col2:
+                        column_f_density_alt = st.number_input("Input column fire protection density for alt. pcf", value=20)
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        beam_f_gwp_alt = st.number_input("Input beam fire protection global warming (kg CO2 eq) per 1000kg unit material for alt.", value=500)
+                    with col2:
+                        column_f_gwp_alt = st.number_input("Input column fire protection global warming (kg CO2 eq) per 1000kg unit material for alt.", value=500)
 
 
+                total_sfrm_cost_alt = construction_cost_df_updated_alt.at[0, 'Floor']/beam_unit_material_cost*beam_sfrm_unit_volume*\
+                                           beam_f_density_alt*0.4536/1000*beam_f_gwp_alt+\
+                                           construction_cost_df_updated_alt.at[0, 'Column']/beam_unit_material_cost*beam_sfrm_unit_volume*\
+                                           column_f_density_alt*0.4536/1000*column_f_gwp_alt
 
-                    content_ei_alt = content_cost_alt / CPI_inflation_till_now * environmental_impact_table[:, 0]
-                    steel_ei_alt = steel_cost_alt / CPI_inflation_till_now * environmental_impact_table[:, 1]
-                    concrete_ei_alt = concrete_cost_alt / CPI_inflation_till_now * environmental_impact_table[:, 2]
+                ei_cost_alt = st.session_state.ei_cost_alt
 
-                    namep1 = pd.DataFrame({
-                        'Impact name': [environmental_impact_name]
-                    })
+                content_cost_alt = ei_cost_alt['Average content loss per sever fire'][0]
+                steel_cost_alt = ei_cost_alt['Average steel loss per sever fire'][0]
+                concrete_cost_alt = ei_cost_alt['Average concrete loss per sever fire'][0]
 
-                    namep2 = pd.DataFrame({
-                        'Unit': [environmental_impact_unit]
-                    })
-                    row_names = namep1['Impact name'][0] + '-' + namep2['Unit'][0]
 
-                    environmental_impact_df_alt = pd.DataFrame({
-                        'Total': np.array(content_ei_alt, dtype=int) + np.array(steel_ei_alt, dtype=int) + np.array(concrete_ei_alt,
-                                                                                                            dtype=int),
-                        'Content': np.array(content_ei_alt, dtype=int),
-                        'Steel': np.array(steel_ei_alt, dtype=int),
-                        'Conrete': np.array(concrete_ei_alt, dtype=int)
-                    }, index=row_names)
 
-                    st.session_state.environmental_impact_df_alt = environmental_impact_df_alt
+                content_ei_alt = content_cost_alt / CPI_inflation_till_now * environmental_impact_table[:, 0]
+                steel_ei_alt = steel_cost_alt / CPI_inflation_till_now * environmental_impact_table[:, 1]
+                concrete_ei_alt = concrete_cost_alt / CPI_inflation_till_now * environmental_impact_table[:, 2]
+
+                namep1 = pd.DataFrame({
+                    'Impact name': [environmental_impact_name]
+                })
+
+                namep2 = pd.DataFrame({
+                    'Unit': [environmental_impact_unit]
+                })
+                row_names = namep1['Impact name'][0] + '-' + namep2['Unit'][0]
+
+                environmental_impact_df_alt = pd.DataFrame({
+                    'Total': np.array(content_ei_alt, dtype=int) + np.array(steel_ei_alt, dtype=int) + np.array(concrete_ei_alt,
+                                                                                                        dtype=int),
+                    'Content': np.array(content_ei_alt, dtype=int),
+                    'Steel': np.array(steel_ei_alt, dtype=int),
+                    'Conrete': np.array(concrete_ei_alt, dtype=int)
+                }, index=row_names)
+
+                st.session_state.environmental_impact_df_alt = environmental_impact_df_alt
 
 
         st.write('---')
@@ -266,10 +263,12 @@ def show():
         st.write("---")
         data = {
             'Rent loss': [int(rent_loss)],
-            'GWP(CO_2)': [int(total_sfrm_cost_original)],
             'Cobenefit': [int(Cobenefits_value)],
         }
         Cobenefits_value_df = pd.DataFrame(data)
+
+
+
 
 
         if rent_loss_selection:
@@ -289,11 +288,15 @@ def show():
 
             st.dataframe(Cobenefits_value_df, use_container_width=True, hide_index=True)
             st.session_state.Cobenefits_value_df = Cobenefits_value_df  # Attribute API
-
-
-
-        st.write("**Full environment impact for reference design**")
-        st.dataframe(environmental_impact_df, use_container_width=True, hide_index=False)
+            if environment_impact:
+                data_sfrm_co2 = {
+                    'Greenhouse gas(CO_2) from SFRM': [int(total_sfrm_cost_original)],
+                }
+                st.dataframe(data_sfrm_co2)
+                st.session_state.co2_sfrm = data_sfrm_co2  # Attribute API
+        if environment_impact:
+            st.write("**Full environment impact for reference design**")
+            st.dataframe(environmental_impact_df, use_container_width=True, hide_index=False)
 
 
         if alter_design:
@@ -301,16 +304,23 @@ def show():
                 st.write("**Results for alternative design**")
                 data = {
                     'Rent loss': [int(rent_loss_alt)],
-                    'GWP(CO_2)': [int(total_sfrm_cost_alt)],
                     'Cobenefit': [int(Cobenefits_value_alt)],
 
                 }
                 Cobenefits_value_alt_df = pd.DataFrame(data)
 
+
+
                 st.dataframe(Cobenefits_value_alt_df, use_container_width=True, hide_index=True)
                 st.session_state.Cobenefits_value_df_alt = Cobenefits_value_alt_df  # Attribute API
-
-            st.write("**Full environment impact for alternative design**")
-            st.dataframe(environmental_impact_df_alt, use_container_width=True, hide_index=False)
+                if environment_impact:
+                    data_sfrm_co2_alt = {
+                        'Greenhouse gas(CO_2) from SFRM': [int(total_sfrm_cost_alt)],
+                    }
+                    st.dataframe(data_sfrm_co2_alt)
+                    st.session_state.co2_sfrm = data_sfrm_co2_alt  # Attribute API
+            if environment_impact:
+                st.write("**Full environment impact for alternative design**")
+                st.dataframe(environmental_impact_df_alt, use_container_width=True, hide_index=False)
 
 

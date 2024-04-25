@@ -37,8 +37,8 @@ def show():
             CI_ref=construction_cost_df['Floor'][0]+construction_cost_df['Column'][0]
             direct_damage_loss=st.session_state.direct_damage_loss
             DD_ref=direct_damage_loss['Study year loss']
-            indirect_damage_loss_df=st.session_state.indirect_damage_loss_df
-            ID_ref=indirect_damage_loss_df['indirect damage loss']
+            indirect_damage_ref=st.session_state.indirect_damage_ref
+            ID_ref=indirect_damage_ref['Study year loss']
             Maintenance_cost_df=st.session_state.Maintenance_cost_df   # Attribute API
             CM_ref=Maintenance_cost_df['Maintenance cost']
             Cobenefits_value_df=st.session_state.Cobenefits_value_df    # Attribute API
@@ -51,8 +51,8 @@ def show():
                 CI_alt=construction_cost_df_alt['Floor'][0]+construction_cost_df_alt['Column'][0]
                 direct_damage_loss_alt=st.session_state.direct_damage_loss_alt
                 DD_alt=direct_damage_loss_alt['Study year loss']
-                indirect_damage_loss_df_alt=st.session_state.indirect_damage_loss_df_alt
-                ID_alt=indirect_damage_loss_df_alt['indirect damage loss']
+                indirect_damage_alt = st.session_state.indirect_damage_alt    # Attribute API
+                ID_alt=indirect_damage_alt['Study year loss']
                 maintenance_cost_total_alt=st.session_state.maintenance_cost_total_alt  # Attribute API
                 CM_alt=maintenance_cost_total_alt['Maintenance cost']
                 Cobenefits_value_df_alt=st.session_state.Cobenefits_value_df_alt    # Attribute API
