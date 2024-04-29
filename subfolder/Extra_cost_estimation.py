@@ -37,7 +37,7 @@ def show():
         if alter_design:
             extra_cost_method = st.selectbox(
                 f'Method to measure extra cost of **alternative design**',
-                ('Roll reinforcement','Welded Wire Fabric','Input own value'))
+                ('Bar Reinforcement','Welded Wire Mesh','Input own value'))
 
             if option_analysis_type == 'Start a new analysis':
                 extra_cost_saved = 0

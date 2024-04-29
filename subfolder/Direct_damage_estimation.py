@@ -186,9 +186,9 @@ def show():
         if Injury_threshold_diy:
             qfuel_threshold1 = st.number_input("Input value of fire load beyond which the injury starts to be considered in the model", value=100)
             qfuel_threshold2 = st.number_input("Input value of fire load beyond which the injury starts to be fully considered in the model", value=300)
-
-        qfuel_threshold1 = 200
-        qfuel_threshold2 = 500
+        else:
+            qfuel_threshold1 = 100
+            qfuel_threshold2 = 300
 
         Injury_correction = np.ones_like(qfuel, dtype=float)
         Injury_correction[qfuel < qfuel_threshold2] = (qfuel[qfuel < qfuel_threshold2]-qfuel_threshold1) / (qfuel_threshold2-qfuel_threshold1)
