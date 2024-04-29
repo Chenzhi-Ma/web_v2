@@ -11,6 +11,13 @@ def show():
 
     st.header("Economic impact of performance-based structural fire design")
 
+    fragility_parameter_original = st.session_state.fragility_parameter_original
+    building_parameter_original = st.session_state.building_parameter_original
+    Affect_area = building_parameter_original['Total area'][0]
+    Compartment_num=fragility_parameter_original.at[0, 'Number of compartment']
+    Severe_fire_pro=fragility_parameter_original.at[0,'Probability of severe fire']
+    study_year = fragility_parameter_original.at[0,'Study year']
+
     if "environment_impact" in st.session_state:
         environment_impact = st.session_state.environment_impact
     else:
@@ -153,9 +160,11 @@ def show():
                 'Unit': [environmental_impact_unit]
             })
             row_names = namep1['Impact name'][0] + '-' + namep2['Unit'][0]
-
+            Total_envir=np.array(content_ei,dtype=int)+np.array(steel_ei,dtype=int)+np.array(concrete_ei,dtype=int)
             environmental_impact_df = pd.DataFrame({
-                'Total':np.array(content_ei,dtype=int)+np.array(steel_ei,dtype=int)+np.array(concrete_ei,dtype=int),
+                'Total(Per severe fire)': Total_envir,
+                'Total(Annual)': np.array(Total_envir * Severe_fire_pro * 1e-9 * Affect_area,dtype=int),
+                'Total(Study year)': np.array(Total_envir * Severe_fire_pro * 1e-9 * Affect_area * study_year,dtype=int),
                 'Content': np.array(content_ei,dtype=int),
                 'Steel': np.array(steel_ei,dtype=int),
                 'Conrete': np.array(concrete_ei,dtype=int)
@@ -174,7 +183,7 @@ def show():
             extra_labor = extra_cost_df['Extra labor alt. (hour)'][0]
             total_labor_hour_alt = construction_cost_df_alt['Floor'][2] + construction_cost_df_alt['Column'][2]
             rent_loss_alt = (total_labor_hour_alt / number_crew + Cure_time+extra_labor*2/number_crew_reinf) * Unit_rent_loss / 24 / 30 * Affect_area*per_rented
-            print(total_labor_hour_alt,rent_loss_alt,number_crew)
+
 
             Cobenefits_value_alt = 0
             construction_cost_df_updated_alt = st.session_state.construction_cost_df_alt
@@ -226,10 +235,13 @@ def show():
                     'Unit': [environmental_impact_unit]
                 })
                 row_names = namep1['Impact name'][0] + '-' + namep2['Unit'][0]
+                Total_envir_alt=np.array(content_ei_alt, dtype=int) + np.array(steel_ei_alt, dtype=int) + np.array(concrete_ei_alt,dtype=int)
+
 
                 environmental_impact_df_alt = pd.DataFrame({
-                    'Total': np.array(content_ei_alt, dtype=int) + np.array(steel_ei_alt, dtype=int) + np.array(concrete_ei_alt,
-                                                                                                        dtype=int),
+                    'Total(Per severe fire)': Total_envir_alt,
+                    'Total(Annual)': np.array(Total_envir_alt*Severe_fire_pro * 1e-9 * Affect_area,dtype=int),
+                    'Total(Study year)': np.array(Total_envir_alt * Severe_fire_pro * 1e-9 * Affect_area * study_year,dtype=int),
                     'Content': np.array(content_ei_alt, dtype=int),
                     'Steel': np.array(steel_ei_alt, dtype=int),
                     'Conrete': np.array(concrete_ei_alt, dtype=int)
@@ -289,10 +301,10 @@ def show():
             st.dataframe(Cobenefits_value_df, use_container_width=True, hide_index=True)
             st.session_state.Cobenefits_value_df = Cobenefits_value_df  # Attribute API
             if environment_impact:
-                data_sfrm_co2 = {
+                data_sfrm_co2 = pd.DataFrame ({
                     'Greenhouse gas(CO_2) from SFRM': [int(total_sfrm_cost_original)],
-                }
-                st.dataframe(data_sfrm_co2)
+                })
+                st.dataframe(data_sfrm_co2,hide_index=True)
                 st.session_state.co2_sfrm = data_sfrm_co2  # Attribute API
         if environment_impact:
             st.write("**Full environment impact for reference design**")
@@ -309,16 +321,16 @@ def show():
                 }
                 Cobenefits_value_alt_df = pd.DataFrame(data)
 
-
-
                 st.dataframe(Cobenefits_value_alt_df, use_container_width=True, hide_index=True)
                 st.session_state.Cobenefits_value_df_alt = Cobenefits_value_alt_df  # Attribute API
                 if environment_impact:
                     data_sfrm_co2_alt = {
-                        'Greenhouse gas(CO_2) from SFRM': [int(total_sfrm_cost_alt)],
+                        'Greenhouse gas(CO_2) from SFRM alt.': [int(total_sfrm_cost_alt)]
                     }
-                    st.dataframe(data_sfrm_co2_alt)
-                    st.session_state.co2_sfrm = data_sfrm_co2_alt  # Attribute API
+                    data_sfrm_co2_alt=pd.DataFrame(data_sfrm_co2_alt)
+                    st.dataframe(data_sfrm_co2_alt,hide_index=True)
+                    st.session_state.co2_sfrm_alt = data_sfrm_co2_alt  # Attribute API
+
             if environment_impact:
                 st.write("**Full environment impact for alternative design**")
                 st.dataframe(environmental_impact_df_alt, use_container_width=True, hide_index=False)

@@ -34,8 +34,6 @@ def show():
             option_analysis_type = 'Start a new analysis'
             st.write('**The restored input parameter would not be applied**')
 
-
-
         if 'maintenance_input_original' in st.session_state:
             maintenance_input_original = st.session_state.maintenance_input_original
             study_year_saved = maintenance_input_original.at[0, 'Study year']
@@ -117,7 +115,6 @@ def show():
                 st.write("Default damage state cost value:", damage_state_cost_value)
 
 
-
         fire_load_distribution = st.selectbox(
             'How would you like to define the fire load distribution',
             ('Use given distribution (gumbel distribution)', 'Upload file'))
@@ -134,19 +131,95 @@ def show():
             uploaded_file_fire = st.file_uploader("Choose a file")
             qfuel=np.asarray(uploaded_file_fire.iloc[:,:], float)
 
+        st.session_state.qfuel = qfuel
+
         size_fragility = np.shape(hazard_intensity)
         vulnerability_data1 = np.zeros(size_fragility[0])
         vulnerability_data = np.zeros(size_fragility[0])
+        DS_probability=np.zeros([size_fragility[0],5])
         for i in range(damage_state_num - 1, 0, -1):
             vulnerability_data1 += np.maximum((-fragility_prob[:, i] + fragility_prob[:, i - 1]),0) * damage_state_cost_value[i-1]
+            DS_probability[:,i] = np.maximum((-fragility_prob[:, i] + fragility_prob[:, i - 1]),0)
 
         vulnerability_data = np.maximum(fragility_prob[:, damage_state_num - 1],0) * damage_state_cost_value[damage_state_num - 1] + vulnerability_data1
+        DS_probability[:, damage_state_num] = np.maximum(fragility_prob[:, damage_state_num - 1],0)
+        DS_probability[:, 0] = 1.0 - fragility_prob[:, 0]
+
 
         damage_value = np.interp(qfuel, hazard_intensity, vulnerability_data)
         damage_value_average=np.average(damage_value)
-        environment_impact=st.checkbox("Considering the lifetime environmental impact?",value=False)
-        st.session_state.environment_impact = environment_impact
 
+        # injury loss estimation
+
+        SEV_distribution_matrix = np.array([0.43877551,0.306122449,0.102040816,0.051020408,0.102040816])
+        VSL = 11600000.00
+        SEV_loss_friction = np.array([0.003, 0.047, 0.105, 0.266, 1])
+        AVE_loss = np.sum(SEV_distribution_matrix * SEV_loss_friction * VSL)
+        CASU_SPRD2 = np.array([
+            [0.8573975, 1],
+            [0.0855615, 2],
+            [0.02139037, 3],
+            [0.01247772, 5],
+            [0.01069519, 4],
+            [0.00356506, 7],
+            [0.00356506, 6],
+            [0.00178253, 11],
+            [0.00178253, 16],
+            [0.00178253, 10]
+        ])
+
+        CASU_SPRD4 = np.array([
+            [0.57407407, 1],
+            [0.14814815, 3],
+            [0.12962963, 2],
+            [0.05555556, 5],
+            [0.03703704, 6],
+            [0.01851852, 7],
+            [0.01851852, 14],
+            [0.01851852, 29]
+        ])
+
+        ave_casu_fspread2 = np.sum(CASU_SPRD2[:, 0] * CASU_SPRD2[:, 1]) * (1 - 0.9368)
+        ave_casu_fspread4 = np.sum(CASU_SPRD4[:, 0] * CASU_SPRD4[:, 1]) * (1 - 0.9368)
+
+        Injury_threshold_diy=st.checkbox("Modify the default injury loss calculation threshold?",value=False)
+        if Injury_threshold_diy:
+            qfuel_threshold1 = st.number_input("Input value of fire load beyond which the injury starts to be considered in the model", value=100)
+            qfuel_threshold2 = st.number_input("Input value of fire load beyond which the injury starts to be fully considered in the model", value=300)
+
+        qfuel_threshold1 = 200
+        qfuel_threshold2 = 500
+
+        Injury_correction = np.ones_like(qfuel, dtype=float)
+        Injury_correction[qfuel < qfuel_threshold2] = (qfuel[qfuel < qfuel_threshold2]-qfuel_threshold1) / (qfuel_threshold2-qfuel_threshold1)
+        Injury_correction[qfuel < qfuel_threshold1] = 0
+
+
+        Injury_correction_fragility = np.ones_like(hazard_intensity, dtype=float)
+        Injury_correction_fragility[hazard_intensity < qfuel_threshold2] = \
+            (hazard_intensity[hazard_intensity < qfuel_threshold2]-qfuel_threshold1) / (qfuel_threshold2-qfuel_threshold1)
+        Injury_correction_fragility[hazard_intensity < qfuel_threshold1] = 0
+
+
+        #fire SPRD2: damage 0,1,2,3
+        Prob_SPRD2=np.sum(DS_probability[:, 0:4],1)
+        Injury_loss_SPRD2=Prob_SPRD2*ave_casu_fspread2*AVE_loss*Injury_correction_fragility
+        Injury_value_SPRD2 = np.interp(qfuel, hazard_intensity,Injury_loss_SPRD2)  # mapping loss to actual fire distribution
+
+        #Fire SPRD4: damage 4
+        Prob_SPRD4=DS_probability[:, 4]
+        Injury_loss_SPRD4=Prob_SPRD4*ave_casu_fspread4*AVE_loss*Injury_correction_fragility #relationship between fire load and loss
+        Injury_value_SPRD4 = np.interp(qfuel, hazard_intensity, Injury_loss_SPRD4) # mapping loss to actual fire distribution
+
+        ## calculating actual loss
+
+        Total_injury_loss= (Injury_value_SPRD2+Injury_value_SPRD4)*Injury_correction
+        Injury_value_average = np.average(Total_injury_loss)
+
+
+
+        environment_impact = st.checkbox("Considering the lifetime environmental impact?",value=False)
+        st.session_state.environment_impact = environment_impact
         if environment_impact:
             st.write('**Input the contribution of material at each damage state**')
             input_data = {}
@@ -195,8 +268,6 @@ def show():
 
 
 
-
-
         st.markdown("**parameters for alternative design**")
         #alter_design = st.checkbox('Do you want to get damage cost value for alternative design?')
         if "alter_design" in st.session_state:
@@ -226,7 +297,7 @@ def show():
                     else:
                         construction_cost_df_alt = st.session_state.construction_cost_df_alt
 
-                        CI_alt = (construction_cost_df_alt['Floor'][0] + construction_cost_df_alt['Column'][0])/Compartment_num+19.2 * 1000
+                        CI_alt = (construction_cost_df_alt['Floor'][0] + construction_cost_df_alt['Column'][0])/Compartment_num_saved+19.2 * 1000
                         damage_state_cost_value_alt = [0.24 * CI_alt, 0.91 * CI_alt, 1.66 * CI_alt, 100.00 * CI_alt]
                         print(damage_state_cost_value_alt)
                         st.write("Default damage state cost value alt.:", np.array(damage_state_cost_value_alt,dtype=int))
@@ -258,17 +329,49 @@ def show():
 
             vulnerability_data1_alt = np.zeros(size_fragility[0])
             vulnerability_data_alt = np.zeros(size_fragility[0])
+            DS_probability_alt = np.zeros([size_fragility[0], 5])
             for i in range(damage_state_num - 1, 0, -1):
                 vulnerability_data1_alt += np.maximum((-fragility_prob_alt[:, i] + fragility_prob_alt[:, i - 1]), 0) * \
                                        damage_state_cost_value_alt[i - 1]
-
+                DS_probability_alt[:, i] = np.maximum((-fragility_prob_alt[:, i] + fragility_prob_alt[:, i - 1]), 0)
             vulnerability_data_alt = np.maximum(fragility_prob_alt[:, damage_state_num - 1], 0) * damage_state_cost_value_alt[
                 damage_state_num - 1] + vulnerability_data1_alt
+            DS_probability_alt[:, damage_state_num] = np.maximum(fragility_prob_alt[:, damage_state_num - 1], 0)
+            DS_probability_alt[:, 0] = 1.0 - fragility_prob_alt[:, 0]
+
 
             damage_value_alt = np.interp(qfuel, hazard_intensity, vulnerability_data_alt)
             damage_value_average_alt = np.average(damage_value_alt)
 
-            st.session_state.qfuel=qfuel
+            Injury_correction_alt = np.ones_like(qfuel, dtype=float)
+            Injury_correction_alt[qfuel < qfuel_threshold2] = (qfuel[qfuel < qfuel_threshold2] - qfuel_threshold1) / (
+                        qfuel_threshold2 - qfuel_threshold1)
+            Injury_correction_alt[qfuel < qfuel_threshold1] = 0
+
+            Injury_correction_fragility_alt = np.ones_like(hazard_intensity,dtype=float)
+            Injury_correction_fragility_alt[hazard_intensity < qfuel_threshold2] = \
+                (hazard_intensity[hazard_intensity < qfuel_threshold2] - qfuel_threshold1) / (
+                            qfuel_threshold2 - qfuel_threshold1)
+            Injury_correction_fragility_alt[hazard_intensity < qfuel_threshold1] = 0
+
+
+            # fire SPRD2: damage 0,1,2,3
+            Prob_SPRD2_alt = np.sum(DS_probability_alt[:, 0:4], 1)
+            Injury_loss_SPRD2_alt = Prob_SPRD2_alt * ave_casu_fspread2 * AVE_loss*Injury_correction_fragility_alt
+            Injury_value_SPRD2_alt = np.interp(qfuel, hazard_intensity,
+                                           Injury_loss_SPRD2_alt)  # mapping loss to actual fire distribution
+
+            # Fire SPRD4: damage 4
+            Prob_SPRD4_alt = DS_probability_alt[:, 4]
+            Injury_loss_SPRD4_alt = Prob_SPRD4_alt * ave_casu_fspread4 * AVE_loss*Injury_correction_fragility_alt  # relationship between fire load and loss
+            Injury_value_SPRD4_alt = np.interp(qfuel, hazard_intensity,
+                                           Injury_loss_SPRD4_alt)  # mapping loss to actual fire distribution
+
+
+
+            Total_injury_loss_alt = (Injury_value_SPRD2_alt + Injury_value_SPRD4_alt) * Injury_correction_alt
+            Injury_value_average_alt = np.average(Total_injury_loss_alt)
+
 
             if environment_impact:
                 vulnerability_data1_material_alt = np.zeros(size_fragility[0])
@@ -297,13 +400,15 @@ def show():
         st.write("---")
 
 
-        Annual_loss=Severe_fire_pro*damage_value_average*1e-9*building_area
+        Annual_loss=Severe_fire_pro*(damage_value_average+Injury_value_average)*1e-9*building_area
         data = {
             'Average loss per severe fire': [int(damage_value_average)],
+            'Injury loss per severe fire': [int(Injury_value_average)],
             'Annual loss': [int(Annual_loss)],
             'Study year': [int(study_year)],
             'Study year loss': [int(Annual_loss*study_year)],
             'Severe fire frequency (*1e-9)': [Severe_fire_pro],
+
         }
         direct_damage_loss = pd.DataFrame(data)
 
@@ -322,7 +427,10 @@ def show():
         ax1 = f1.add_subplot(4, 1, 1)
         plt.subplots_adjust(left=0.1, right=0.9, top=0.9, bottom=0.1, wspace=0.4, hspace=0.4)
         ax1.grid(True)
-        p1 = ax1.plot(hazard_intensity,fragility_prob,label='DS1')
+        labels = ['DS1', 'DS2', 'DS3', 'DS4']
+        for i in range(fragility_prob.shape[1]):  # Assuming fragility_prob has 4 columns
+            ax1.plot(hazard_intensity, fragility_prob[:, i], label=labels[i])
+
         ax1.set_xlabel('Fire load (MJ)')
         ax1.set_ylabel('Probability')
         ax1.set_title('Fragility curves')
@@ -349,6 +457,13 @@ def show():
         ax4.set_ylabel('Vulnerability ($)')
         ax4.set_title('vulnerability curves')
 
+        ax5 = ax4.twinx()
+        ax5.grid(True)
+        p4 = ax5.plot(hazard_intensity, (Injury_loss_SPRD2+Injury_loss_SPRD4), color='red')
+        ax5.set_ylabel('Injury loss', color='red')
+        ax5.tick_params(axis='y', labelcolor='red')
+
+
         col1, col2 = st.columns(2)
         with col1:
             st.write("**Results for reference design**")
@@ -362,16 +477,16 @@ def show():
 
             #st.write("## results for alternative design")
 
-            Annual_loss_alt = Severe_fire_pro * damage_value_average_alt * 1e-9 * building_area
+            Annual_loss_alt = Severe_fire_pro * (damage_value_average_alt+Injury_value_average_alt) * 1e-9 * building_area
             data_alt = {
-
                 'Average loss per severe fire': [int(damage_value_average_alt)],
+                'Injury loss per severe fire': [int(Injury_value_average_alt)],
                 'Annual loss': [int(Annual_loss_alt)],
                 'Study year': [int(study_year)],
                 'Study year loss': [int(Annual_loss_alt * study_year)],
                 'Severe fire frequency (*1e-9)': [Severe_fire_pro],
-
             }
+
             direct_damage_loss_alt = pd.DataFrame(data_alt)
             #st.write(" Summary for alternative design")
 
@@ -388,7 +503,9 @@ def show():
             ax1 = f2.add_subplot(4, 1, 1)
             plt.subplots_adjust(left=0.1, right=0.9, top=0.9, bottom=0.1, wspace=0.4, hspace=0.4)
             ax1.grid(True)
-            p1 = ax1.plot(hazard_intensity, fragility_prob_alt, label='DS1')
+            labels = ['DS1', 'DS2', 'DS3', 'DS4']
+            for i in range(fragility_prob_alt.shape[1]):  # Assuming fragility_prob has 4 columns
+                ax1.plot(hazard_intensity, fragility_prob_alt[:, i], label=labels[i])
             ax1.set_xlabel('Fire load (MJ)')
             ax1.set_ylabel('Probability')
             ax1.set_title('Fragility curves')
@@ -414,6 +531,15 @@ def show():
             ax4.set_xlabel('Fire load (MJ)')
             ax4.set_ylabel('Vulnerability ($)')
             ax4.set_title('vulnerability curves')
+
+            ax5 = ax4.twinx()
+            ax5.grid(True)
+            p4 = ax5.plot(hazard_intensity, (Injury_loss_SPRD2_alt + Injury_loss_SPRD4_alt), color='red')
+            ax5.set_ylabel('Injury loss', color='red')
+            ax5.tick_params(axis='y', labelcolor='red')
+
+
+
             with col2:
                 st.write("**Results for alternative design**")
                 st.dataframe(direct_damage_loss_alt, use_container_width=True, hide_index=True)
@@ -443,8 +569,6 @@ def show():
         }
         fragility_parameter_original = pd.DataFrame(data)
         st.session_state.fragility_parameter_original = fragility_parameter_original  # Attribute API
-
-
 
         st.write("---")
 

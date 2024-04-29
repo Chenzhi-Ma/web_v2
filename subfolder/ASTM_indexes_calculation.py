@@ -155,12 +155,21 @@ def show():
             if environment_impact:
                 environmental_impact_df=st.session_state.environmental_impact_df
                 environmental_impact_df_alt=st.session_state.environmental_impact_df_alt
+                data_sfrm_co2 = st.session_state.co2_sfrm
+                data_sfrm_co2_alt = st.session_state.co2_sfrm_alt
 
-
-                data_environment = pd.concat([environmental_impact_df['Total'], environmental_impact_df_alt['Total']], axis=1,
+                data_environment = pd.concat([environmental_impact_df['Total(Study year)'], environmental_impact_df_alt['Total(Study year)']], axis=1,
                                              keys=['Total_Reference', 'Total_Alternative'])
+
+                data_environment_sfrm = pd.concat([data_sfrm_co2['Greenhouse gas(CO_2) from SFRM'], data_sfrm_co2_alt['Greenhouse gas(CO_2) from SFRM alt.']], axis=1,
+                                             keys=['SFRM_Reference', 'SFRM_Alternative'])
+
                 st.markdown("### Environment impact for the two designs")
+
+                st.dataframe(data_environment_sfrm,hide_index=True)
                 st.dataframe(data_environment)
+
+
 
         else:
             data = {

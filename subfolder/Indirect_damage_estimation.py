@@ -33,7 +33,13 @@ def show():
     proprietorIncome = np.asarray(proprietorIncome_table.iloc[:, 1:], float)
     fragility_curve = st.session_state.fragility_curve
 
-    fragility_parameter_alt=st.session_state.fragility_parameter_alt
+    if "alter_design" in st.session_state:
+        alter_design = st.session_state.alter_design
+    else:
+        alter_design = []
+    if alter_design:
+        fragility_parameter_alt=st.session_state.fragility_parameter_alt
+
     fragility_parameter_original = st.session_state.fragility_parameter_original
 
     building_parameter_original = st.session_state.building_parameter_original
@@ -143,10 +149,7 @@ def show():
         st.markdown("**Parameters for alternative design**")
         #alter_design = st.checkbox('Do you want to get damage cost value for alternative design?')
 
-        if "alter_design" in st.session_state:
-            alter_design = st.session_state.alter_design
-        else:
-            alter_design=[]
+
 
         if alter_design:
             fragility_num_alt = fragility_parameter_alt.at[0, 'Index of the fragility curves for alt.']
