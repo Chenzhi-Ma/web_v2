@@ -1,0 +1,11 @@
+{
+    "Current_page": "Current page: home page for calculation",
+    "fire_parameter_original": "{\"columns\":[\"Modify fire design parameter\",\"Beam fire rating\",\"Column fire rating\",\"Beam fire protection material\",\"Column fire protection material\",\"Beam fire protection percentage\",\"Column fire protection percentage\"],\"index\":[0],\"data\":[[false,2,2,1,1,1,1]]}",
+    "building_parameter_original": "{\"columns\":[\"Modify default building parameter\",\"Story height\",\"Total area\",\"Bay load\",\"Building stories\",\"Bay size1\",\"Bay size2\"],\"index\":[0],\"data\":[[false,10,102000,0.115,11,20,25]]}",
+    "path_for_save": "",
+    "option_analysis_type": "Load session variables",
+    "construction_cost_df_original": "{\"columns\":[\"\",\"Floor\",\"Column\",\"Partition\",\"Sprinkler\",\"Fire pump\",\"Alarm\",\"Ceiling\"],\"index\":[0,1],\"data\":[[\"Cost ($)\",87720.0,45564.0,228825.0,279196.0,48450.0,233795.0,0.0],[\"Cost multiplier\",0.0064733044,0.003362446,0.0168862039,0.0206033177,0.0035753716,0.0172529774,0.0]]}",
+    "shown_page": "Calculation",
+    "construction_cost_df": "{\"columns\":[\"\",\"Floor\",\"Column\",\"Partition\",\"Sprinkler\",\"Fire pump\",\"Alarm\",\"Ceiling\"],\"index\":[0,1,2],\"data\":[[\"Cost ($)\",87720.0,45564.0,0.0,0.0,0.0,0.0,0.0],[\"Cost multiplier\",0.0064733044,0.003362446,0.0,0.0,0.0,0.0,0.0],[\"Labor hour\",753.0,391.0,0.0,0.0,0.0,0.0,0.0]]}",
+    "BI": 1
+}
