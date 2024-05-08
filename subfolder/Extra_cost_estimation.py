@@ -3,12 +3,12 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+
 import pickle
 from functions import column_cost_calculation, floor_system_cost,fire_service_cost,calculate_fireprotection_cost
 import matplotlib.pyplot as plt
 def show():
     st.title('Extra cost estimation')
-
     st.header("Economic impact of performance-based structural fire design")
 
     building_parameter_original = st.session_state.building_parameter_original
