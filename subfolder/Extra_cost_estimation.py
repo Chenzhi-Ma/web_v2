@@ -19,7 +19,7 @@ def show():
     welded_wire_name = welded_wire_table.iloc[1:9,0].tolist()
     welded_wire_labor=np.asarray(welded_wire_table.iloc[1:, 2], float)
     welded_wire_cost = np.asarray(welded_wire_table.iloc[1:, 3], float)
-    print(welded_wire_labor)
+    print(welded_wire_labor,111)
     with st.sidebar:
         # Set up the part for user input file
         st.markdown("## **User Input Parameter**")
@@ -37,7 +37,7 @@ def show():
         if alter_design:
             extra_cost_method = st.selectbox(
                 f'Method to measure extra cost of **alternative design**',
-                ('Bar Reinforcement','Welded Wire Mesh','Input own value'))
+                ('Roll Reinforcement','Welded Wire Mesh','Input own value'))
 
             if option_analysis_type == 'Start a new analysis':
                 extra_cost_saved = 0
@@ -49,7 +49,10 @@ def show():
                 else:
                     extra_cost_saved = 0
 
-            if extra_cost_method == 'Roll reinforcement':
+            extra_cost=extra_cost_saved
+            extra_labor = 0
+            if extra_cost_method == 'Roll Reinforcement':
+                print(extra_cost_method, 111)
                 rebar_area_ref = st.number_input("Input estimated rebar area (per mm^2/m) for reference design", value=60)
                 rebar_area_alt = st.number_input("Input estimated rebar area (per mm^2/m) for alternative design",value=230)
                 rebar_weight_reference = rebar_area_ref / 3.28 / 71 * 2 * 0.376 * 100
@@ -64,7 +67,7 @@ def show():
             if extra_cost_method == 'Input own value':
                 extra_cost = st.number_input("Input estimated extra cost",value=extra_cost_saved)
                 extra_labor = st.number_input("Input estimated extra labor",value=0.0)
-            if extra_cost_method == 'Welded Wire Fabric':
+            if extra_cost_method == 'Welded Wire Mesh':
                 option_rebar_ref = st.selectbox(
                     "Input welded wire mesh for reference design",
                     welded_wire_name,

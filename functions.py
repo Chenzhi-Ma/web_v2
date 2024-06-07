@@ -260,6 +260,19 @@ def calculate_fireprotection_cost(thickness,para_fireprotection,perimeter,materi
 
     return price
 
+# def convert_state_for_json(state):
+#     serializable_state = {}
+#     for key, value in state.items():
+#         if isinstance(value, pd.DataFrame):
+#             # Convert DataFrame to a JSON string
+#             serializable_state[key] = value.to_json(orient='split')
+#         elif isinstance(value, np.bool_):
+#             # Convert NumPy boolean to Python boolean
+#             serializable_state[key] = bool(value)
+#         else:
+#             serializable_state[key] = value
+#     return serializable_state
+
 def convert_state_for_json(state):
     serializable_state = {}
     for key, value in state.items():
@@ -269,21 +282,45 @@ def convert_state_for_json(state):
         elif isinstance(value, np.bool_):
             # Convert NumPy boolean to Python boolean
             serializable_state[key] = bool(value)
+        elif isinstance(value, np.ndarray):
+            # Convert NumPy array to a list
+            serializable_state[key] = value.tolist()
+        elif isinstance(value, (np.integer, np.floating)):
+            # Convert NumPy integers and floats to Python native types
+            serializable_state[key] = value.item()
         else:
             serializable_state[key] = value
     return serializable_state
+
+# def convert_state_from_json(serialized_state):
+#     original_state = {}
+#     for key, value in serialized_state.items():
+#         if isinstance(value, str):
+#             try:
+#                 # Use StringIO to wrap the JSON string
+#                 str_io = StringIO(value)
+#                 original_state[key] = pd.read_json(str_io, orient='split')
+#             except ValueError:
+#                 # If the conversion fails, keep the value as a string
+#                 original_state[key] = value
+#         else:
+#             original_state[key] = value
+#     return original_state
 
 def convert_state_from_json(serialized_state):
     original_state = {}
     for key, value in serialized_state.items():
         if isinstance(value, str):
             try:
-                # Use StringIO to wrap the JSON string
+                # Try to load the string as a DataFrame
                 str_io = StringIO(value)
                 original_state[key] = pd.read_json(str_io, orient='split')
             except ValueError:
                 # If the conversion fails, keep the value as a string
                 original_state[key] = value
+        elif isinstance(value, list):
+            # If the value is a list, convert it to a NumPy array
+            original_state[key] = np.array(value)
         else:
             original_state[key] = value
     return original_state
