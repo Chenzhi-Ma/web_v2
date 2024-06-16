@@ -177,7 +177,7 @@ def show():
             st.markdown('---')
             st.markdown('### Parameter for alternative design:')
             number_crew_reinf = st.number_input("Input number of Rodmen (reinf.) ",
-                                                value=4, step=1)
+                                                value=8, step=1)
             construction_cost_df_alt = st.session_state.construction_cost_df_alt
             extra_cost_df = st.session_state.extra_cost_df
             extra_labor = extra_cost_df['Extra labor alt. (hour)'][0]

@@ -79,7 +79,10 @@ def show():
         st.session_state.fragility_curve=fragility_curve
 
         construction_cost_df = st.session_state.construction_cost_df
-        CI = (construction_cost_df['Floor'][0] + construction_cost_df['Column'][0])/Compartment_num_saved+19.2*1000
+        default_intial_construciton_cost = st.number_input(
+            "Input the initial construction cost of the fire compartment, "
+            "default value is the NIST floor system cost excluding the fire protction", value=19.2 * 1000)
+        CI = (construction_cost_df['Floor'][0] + construction_cost_df['Column'][0])/Compartment_num_saved+default_intial_construciton_cost
 
         if option_analysis_type == 'Load session variables':
             if 'fragility_parameter_original' in st.session_state:
@@ -101,18 +104,20 @@ def show():
                     st.write("Default damage state cost value:", damage_state_cost_value)
 
         if option_analysis_type == 'Start a new analysis':
-            damage_state_cost_value = st.text_area("Enter your damage state value (comma-separated):")
+
+            damage_state_cost_value = st.text_area("Enter your damage state cost ratio with respect to initial construction cost (comma-separated):")
         # Process the input and convert it into a NumPy array
             if damage_state_cost_value:
                 try:
                     input_list = [float(item.strip()) for item in damage_state_cost_value.split(',')]
-                    damage_state_cost_value = np.array(input_list)
+                    damage_state_cost_value = np.array(input_list)*CI
                     st.write("Input damage state cost value:", damage_state_cost_value)
                 except ValueError:
                     st.write("Invalid input. Please enter a valid comma-separated list of numbers.")
             else:
-                damage_state_cost_value=[0.24*CI, 0.91*CI,1.66*CI,100.00*CI]
-                st.write("Default damage state cost value:", damage_state_cost_value)
+                input_list=[0.24,0.95,1.66,200.00]
+                damage_state_cost_value = np.array(input_list) * CI
+                st.write("Default damage state cost ratio:", input_list)
 
 
         fire_load_distribution = st.selectbox(
@@ -277,27 +282,34 @@ def show():
         if alter_design:
             fragility_num_alt_saved = 1
 
+            default_intial_construciton_cost_alt = st.number_input(
+                "Input the initial construction cost of the fire compartment, "
+                "default value is the NIST floor system cost excluding the fire protction for alt.", value=19.2 * 1000)
+            construction_cost_df_alt = st.session_state.construction_cost_df_alt
+            CI_alt = (construction_cost_df_alt['Floor'][0] + construction_cost_df_alt['Column'][
+                0]) / Compartment_num_saved + default_intial_construciton_cost_alt
+
+
             if option_analysis_type == 'Load session variables':
                 if 'fragility_parameter_alt' in st.session_state:
                     fragility_parameter_alt=st.session_state.fragility_parameter_alt
                     fragility_num_alt_saved = fragility_parameter_alt.at[0, 'Index of the fragility curves for alt.']
                     damage_state_cost_value_alt_saved = fragility_parameter_alt.at[0, 'Damage cost value for alt.']
                     damage_state_cost_value_alt = damage_state_cost_value_alt_saved
-                    st.write("Stored damage state cost value:", np.array(damage_state_cost_value_alt,dtype=int))
+                    st.write("Stored damage state cost value for alt.:", np.array(damage_state_cost_value_alt,dtype=int))
                 else:
                     damage_state_cost_value_alt = st.text_area("Enter your damage state value (comma-separated) alt.:")
                     # Process the input and convert it into a NumPy array
                     if damage_state_cost_value_alt:
                         try:
                             input_list = [float(item.strip()) for item in damage_state_cost_value_alt.split(',')]
-                            damage_state_cost_value_alt = np.array(input_list)
+                            damage_state_cost_value_alt = np.array(input_list)*CI_alt
                             st.write("Input damage state cost value for alt.:", np.array(damage_state_cost_value_alt,dtype=int))
                         except ValueError:
                             st.write("Invalid input. Please enter a valid comma-separated list of numbers.")
                     else:
                         construction_cost_df_alt = st.session_state.construction_cost_df_alt
 
-                        CI_alt = (construction_cost_df_alt['Floor'][0] + construction_cost_df_alt['Column'][0])/Compartment_num_saved+19.2 * 1000
                         damage_state_cost_value_alt = [0.24 * CI_alt, 0.91 * CI_alt, 1.66 * CI_alt, 100.00 * CI_alt]
                         print(damage_state_cost_value_alt)
                         st.write("Default damage state cost value alt.:", np.array(damage_state_cost_value_alt,dtype=int))
@@ -311,21 +323,19 @@ def show():
             # damage_state_cost_value_alt = st.text_area("Enter your damage state value (comma-separated) alt.:")
             # Process the input and convert it into a NumPy array
             if option_analysis_type == 'Start a new analysis':
-                damage_state_cost_value_alt = st.text_area("Enter your damage state value (comma-separated) alt.:")
+                damage_state_cost_value_alt = st.text_area("Enter your damage state cost ratio with respect to initial construction cost for alt. (comma-separated):")
                 # Process the input and convert it into a NumPy array
                 if damage_state_cost_value_alt:
                     try:
                         input_list = [float(item.strip()) for item in damage_state_cost_value_alt.split(',')]
-                        damage_state_cost_value_alt = np.array(input_list)
+                        damage_state_cost_value_alt = np.array(input_list)*CI_alt
                         st.write("Input damage state cost value for alt.:", damage_state_cost_value_alt)
                     except ValueError:
                         st.write("Invalid input. Please enter a valid comma-separated list of numbers.")
                 else:
-                    construction_cost_df_alt = st.session_state.construction_cost_df_alt
-                    CI_alt = (construction_cost_df_alt['Floor'][0] + construction_cost_df_alt['Column'][
-                        0]) / Compartment_num_saved + 19.2 * 1000
-                    damage_state_cost_value_alt = [0.24 * CI_alt, 0.91 * CI_alt, 1.66 * CI_alt, 100.00 * CI_alt]
-                    st.write("Default damage state cost value alt.:", damage_state_cost_value_alt)
+                    input_list = [0.24, 0.95, 1.66, 200.00]
+                    damage_state_cost_value_alt = np.array(input_list)*CI_alt
+                    st.write("Default damage state cost ratio alt.:", input_list)
 
             vulnerability_data1_alt = np.zeros(size_fragility[0])
             vulnerability_data_alt = np.zeros(size_fragility[0])

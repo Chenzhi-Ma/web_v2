@@ -1,0 +1,8 @@
+id,name,priority,num_du_per_crew,max_crews_per_comp_type,imped_contractor_min_days,imped_contractor_max_days,imped_contractor_min_days_retainer,imped_contractor_max_days_retainer,imped_design_min_days,imped_design_max_days
+1,structural,1,10,10,28,364,7,182,14,182
+2,exterior,2,10,2,14,182,5,91,7,91
+3,interior,3,999,1,5,56,1,30,7,30
+4,exterior-fire compartment,4,10,2,0,0,0,0,0,0
+5,interior-fire compartment,5,999,1,0,0,0,0,0,0
+6,fire,6,999,1,5,56,1,30,0,0
+7,contents,7,999,1,0,0,0,0,0,0

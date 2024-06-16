@@ -53,7 +53,7 @@ def show():
             extra_labor = 0
             if extra_cost_method == 'Roll Reinforcement':
                 print(extra_cost_method, 111)
-                rebar_area_ref = st.number_input("Input estimated rebar area (per mm^2/m) for reference design", value=60)
+                rebar_area_ref = st.number_input("Input estimated rebar area (per mm^2/m) for reference design", value=94)
                 rebar_area_alt = st.number_input("Input estimated rebar area (per mm^2/m) for alternative design",value=230)
                 rebar_weight_reference = rebar_area_ref / 3.28 / 71 * 2 * 0.376 * 100
                 rebar_weight=rebar_area_alt/3.28/71*2*0.376*100

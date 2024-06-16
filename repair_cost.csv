@@ -1,0 +1,8 @@
+functionality,component,unit,quantity in every compartment,installation cost DS1,installation cost DS2,installation cost DS3,demolish cost DS1,demolish cost DS2,demolish cost DS3,redesign DS1,redesign DS2,redesign DS3,rapid_permit DS1,rapid_permit DS2,rapid_permit DS3,full_permit DS1,full_permit DS2,full_permit DS3,,labor lower limit,labor upper limit,labor mean
+structural,floor,sqft,1,1.2,3.85,7.45,0,5.57,5.99,0,0,1,0,0,1,0,0,1,,70,110,90
+exterior,windows,each,2,264,264,264,62.5,62.5,62.5,0,0,1,0,0,1,0,0,0,,,,
+exterior,curtain walls,sqft,0.5,14.05,14.05,14.05,1,1,1,0,0,1,0,0,1,0,0,1,,,,
+interior,doors,each,2,310,310,310,31.5,31.5,31.5,0,0,1,0,0,1,0,0,0,,,,
+interior,wall finishing,sqft,2,0.77,0.77,0.77,1.41,1.41,1.41,0,0,1,0,0,1,0,0,0,,,,
+interior,floor finishes,sqft,1,0.9,0.9,0.9,0.56,0.56,0.56,0,0,1,0,0,1,0,0,0,,,,
+interior,ceiling finishes,sqft,1,7.3,7.3,7.3,1.41,1.41,1.41,0,0,1,0,0,1,0,0,0,,,,

@@ -51,28 +51,26 @@ with st.sidebar:
     # Set up the part for user input file
     st.markdown("## **User Input Parameter**")
   #  BT = st.number_input("Input Building type", value=1, step=1)
+    building_type_map = {
+        'Office-high': 1,
+        'Office-mid': 2,
+        'Apartment-high': 3,
+        'Apartment-mid': 4,
+        'Hospital-high': 5,
+        'Hospital-mid': 6,
+        'Hotel-high': 7,
+        'Hotel-mid': 8
+    }
+
+    # Select box for building type input
     option = st.selectbox(
-       "Input Building type",
-       ('Office-high', 'Office-mid', 'Apartment-high', 'Apartment-mid', 'Hospital-high',
-                         'Hospital-mid', 'Hotel-high', 'Hotel-mid'),
+        "Input Building type",
+        list(building_type_map.keys())
     )
-    BT=1
-    if option == 'Office-high':
-        BT = 1
-    elif option == 'Office-mid':
-        BT = 2
-    elif option == 'Apartment-high':
-        BT = 3
-    elif option == 'Apartment-mid':
-        BT = 4
-    elif option == 'Hospital-high':
-        BT = 5
-    elif option == 'Hospital-mid':
-        BT = 6
-    elif option == 'Hotel-high':
-        BT = 7
-    elif option == 'Hotel-mid':
-        BT = 8
+
+    # Get the corresponding value for the selected option
+    BT = building_type_map[option]
+
 with st.container():
     st.subheader('Results')
     st.write("---")
