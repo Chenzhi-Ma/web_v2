@@ -625,20 +625,20 @@ def show():
             with col1:
 
                 df_cost={
-                    'Total Construction Cost (thousand $)': int(total_cost*cci_other/1000),
-                    'Total Construction Cost per sq.ft ($)': int(total_cost_sqft*cci_other),
-                    'Total floor area (thousand sq.ft) for fire protection': int(total_floor_area_inp/1000),
-                    'Total floor area (thousand sq.ft) for other components': int(building_information_ori[building_index - 1][1]/1000),
+                    '': ['With CCI', "Without CCI"],
+                    'Total Construction Cost (thousand $)': [int(total_cost*cci_other/1000),int(total_cost/1000)],
+                    'Total Construction Cost per sq.ft ($)': [int(total_cost_sqft*cci_other),int(total_cost_sqft)],
+                    'Total floor area (thousand sq.ft) for fire protection': [int(total_floor_area_inp/1000),int(total_floor_area_inp/1000)],
+                    'Total floor area (thousand sq.ft) for other components': [int(building_information_ori[building_index - 1][1]/1000),int(building_information_ori[building_index - 1][1]/1000)],
                     'Total story': int(total_story),
                 }
 
-                df_cost_df = pd.DataFrame(list(df_cost.items()), columns=['Description', 'Value'])
-
+                #df_cost_df = pd.DataFrame(list(df_cost.items()), columns=['Description', 'Value','Value2'])
+                df_cost_df = pd.DataFrame(df_cost, index=[0, 1])
                 st.markdown('**Updated cost data with user-defined cost value**')
                 st.dataframe(construction_cost_df_updated, use_container_width=True, hide_index=True)
 
                 st.dataframe(df_cost_df, use_container_width=True, hide_index=True)
-
 
                 st.session_state.construction_cost_df = construction_cost_df_updated  # Attribute API
                 st.pyplot(f1)
@@ -671,13 +671,12 @@ def show():
                     building_information_ori[building_index - 1][1] / 1000),
                 'Total story': int(total_story),
             }
-            df_cost_orig_df = pd.DataFrame(list(df_cost_orig.items()), columns=['Description', 'Value'])
-            st.dataframe(df_cost_orig_df, use_container_width=True, hide_index=True)
+            #df_cost_orig_df = pd.DataFrame(list(df_cost_orig.items()), columns=['Description', 'Value'])
+            #st.dataframe(df_cost_orig_df, use_container_width=True, hide_index=True)
 
             st.session_state.construction_cost_df_original = construction_cost_df_original  # Attribute API
 
             st.pyplot(f3)
-
 
 
             Download = st.checkbox('Do you want to download the detailed member cost')
