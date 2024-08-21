@@ -21,6 +21,7 @@ def show():
     # import the matlab file .mat, database_original.mat is a 1*1 struct with 7 fields, inlcude all the original data from 130 simulaitons
     database_ori = database_ori_mat['database_original']
 
+    print(database_ori)
     # get the detailed original value from rsmeans
     costdetails_ori_mat = database_ori['costdetails']
     costdetails_ori = costdetails_ori_mat[0, 0]
@@ -49,6 +50,7 @@ def show():
         st.header("Economic impact of performance-based structural fire design")
 
         with (st.sidebar):
+
             st.markdown("## **User Input Parameters**")
             option_analysis_type = st.selectbox(
                 "Analysis type",
@@ -271,7 +273,7 @@ def show():
 
             total_cost = totalcost_ori[building_index - 1][2] + floor_cost + column_cost + column_protection_cost[
                 column_fire_rating_inp - 1] + floor_protection_cost[Beam_fire_rating_inp - 1]
-            # total_cost_sqft = total_cost / total_floor_area_inp
+            total_cost_sqft = total_cost / total_floor_area_inp
 
             if floor_load_max>1000:
                 st.write ("Warning: ")
@@ -366,6 +368,29 @@ def show():
         with st.container():
             st.markdown('**Note: detailed building design and fire design can be found on page "Explore construction cost database"**')
             st.subheader('Results')
+            cci_consider=st.checkbox('Consider city cost index', value=False)
+            if cci_consider:
+                cci_df = pd.read_csv('city_cost_index.csv')
+                state_name = st.selectbox('Select the state', cci_df['STATE'].unique())
+                # Filter cities based on the selected state
+                filtered_cities = cci_df[cci_df['STATE'] == state_name]['City']
+                # Select city from the filtered list
+                city_name = st.selectbox('Select the city', filtered_cities)
+                # Get the index of the selected city
+                city_index = cci_df[(cci_df['STATE'] == state_name) & (cci_df['City'] == city_name)].index[0]
+
+                cci_other=cci_df['TOTAL'].iloc[city_index]/100
+                cci_fire_mat=cci_df['MAT_B10'].iloc[city_index]/100
+                cci_fire_ins = cci_df['INST_B10'].iloc[city_index]/100
+                cci_fire_total = cci_df['TOTAL_B10'].iloc[city_index]/100
+                st.markdown(f"City name: {city_name},"
+                            f"CCI for fire protection material: {cci_df['MAT_B10'].iloc[city_index]}%, CCI for fire protection installation: {cci_fire_ins*100}%,"
+                            f"CCI for fire protection: {cci_fire_total*100}%,CCI for other components: {cci_other*100}%,")
+            else:
+                cci_fire_mat=1
+                cci_fire_ins=1
+                cci_other=1
+                cci_fire_total=1
 
             st.write("---")
 
@@ -421,7 +446,7 @@ def show():
             ax1.grid(True)
             column_fire_cost_given_rate=column_protection_cost[column_fire_rating_inp - 1]
             floor_protection_cost_given_rate=floor_protection_cost[Beam_fire_rating_inp - 1]
-            cost_value_original=[floor_protection_cost_given_rate,column_fire_cost_given_rate,partition_cost,Sprinkler_cost,Fire_pump_cost,Alarm_cost,Ceiling_cost]
+            cost_value_original=[floor_protection_cost_given_rate*cci_fire_total,column_fire_cost_given_rate*cci_fire_total,partition_cost,Sprinkler_cost,Fire_pump_cost,Alarm_cost,Ceiling_cost]
             p1=ax1.bar([1,2,3,4,5,6,7], cost_value_original,width=0.4,edgecolor=[1,0,0])
             ax1.set_xticks([1,2,3,4,5,6,7],('Beams','Columns','Partition','Sprinkler', 'Fire pump', 'Alarm', 'Ceiling'))
             ax1.set_ylabel('Cost ($)')
@@ -433,7 +458,7 @@ def show():
 
             # make the y axis can be shown on right side
             ax2 = ax1.twinx()
-            cost_value_original_multiplier=[floor_protection_cost_given_rate, column_fire_cost_given_rate, partition_cost, Sprinkler_cost,
+            cost_value_original_multiplier=[floor_protection_cost_given_rate*cci_fire_total, column_fire_cost_given_rate*cci_fire_total, partition_cost, Sprinkler_cost,
                           Fire_pump_cost, Alarm_cost, Ceiling_cost]/total_cost
             p2 = ax2.bar([1, 2, 3, 4, 5, 6, 7],
                          cost_value_original_multiplier,width=0.2,edgecolor=[1,0,0])
@@ -452,10 +477,12 @@ def show():
             # show the table that lists the updated cost data
             column_fire_labor_given_rate = column_protection_labor[column_fire_rating_inp - 1]
             floor_protection_labor_given_rate = floor_protection_labor[Beam_fire_rating_inp - 1]
+
+
             data = {
                 '': ['Cost ($)',"Cost multiplier","Labor hour"],
-                'Floor': [int(floor_protection_cost_given_rate),floor_protection_cost_given_rate/total_cost,int(floor_protection_labor_given_rate)],
-                'Column': [int(column_fire_cost_given_rate),column_fire_cost_given_rate/total_cost,int(column_fire_labor_given_rate)],
+                'Floor': [int(floor_protection_cost_given_rate*cci_fire_total),floor_protection_cost_given_rate/total_cost,int(floor_protection_labor_given_rate)],
+                'Column': [int(column_fire_cost_given_rate*cci_fire_total),column_fire_cost_given_rate/total_cost,int(column_fire_labor_given_rate)],
                 'Partition': [int(partition_cost),partition_cost/total_cost,0],
                 'Sprinkler': [int(Sprinkler_cost),Sprinkler_cost/total_cost,0],
                 'Fire pump': [int(Fire_pump_cost),Fire_pump_cost/total_cost,0],
@@ -481,10 +508,12 @@ def show():
                 column_fire_labor_given_rate = column_protection_labor_alt[column_fire_rating_inp_alt - 1]
                 floor_protection_labor_given_rate = floor_protection_labor_alt[Beam_fire_rating_inp_alt - 1]
 
+
+
                 data = {
                     '': ['Cost ($)',"Cost multiplier","Labor hour"],
-                    'Floor': [int(floor_protection_cost_given_rate),floor_protection_cost_given_rate/total_cost,int(floor_protection_labor_given_rate)],
-                    'Column': [int(column_fire_cost_given_rate),column_fire_cost_given_rate/total_cost,int(column_fire_labor_given_rate)],
+                    'Floor': [int(floor_protection_cost_given_rate*cci_fire_total),floor_protection_cost_given_rate/total_cost,int(floor_protection_labor_given_rate)],
+                    'Column': [int(column_fire_cost_given_rate*cci_fire_total),column_fire_cost_given_rate/total_cost,int(column_fire_labor_given_rate)],
                     'Partition': [int(partition_cost),partition_cost/total_cost,0],
                     'Sprinkler': [int(Sprinkler_cost),Sprinkler_cost/total_cost,0],
                     'Fire pump': [int(Fire_pump_cost),Fire_pump_cost/total_cost,0],
@@ -496,7 +525,7 @@ def show():
 
                 ax4 = f2.add_subplot(2, 1, 1)
                 ax4.grid(True)
-                cost_value_alt=[floor_protection_cost_given_rate, column_fire_cost_given_rate, partition_cost, Sprinkler_cost,
+                cost_value_alt=[floor_protection_cost_given_rate*cci_fire_total, column_fire_cost_given_rate*cci_fire_total, partition_cost, Sprinkler_cost,
                               Fire_pump_cost, Alarm_cost, Ceiling_cost]
                 p4 = ax4.bar([1, 2, 3, 4, 5, 6, 7],
                              cost_value_alt, width=0.4, edgecolor=[1, 0, 0])
@@ -511,7 +540,7 @@ def show():
 
                 # make the y axis can be shown on right side
                 ax5 = ax4.twinx()
-                cost_value_alt_multiplier=[floor_protection_cost_given_rate, column_fire_cost_given_rate, partition_cost, Sprinkler_cost,
+                cost_value_alt_multiplier=[floor_protection_cost_given_rate*cci_fire_total, column_fire_cost_given_rate*cci_fire_total, partition_cost, Sprinkler_cost,
                               Fire_pump_cost, Alarm_cost, Ceiling_cost] / total_cost
                 p5 = ax5.bar([1, 2, 3, 4, 5, 6, 7],
                              cost_value_alt_multiplier, width=0.2, edgecolor=[1, 0, 0])
@@ -578,15 +607,16 @@ def show():
 
 
             # show the table that lists the original cost data
+            totalcost_orig=int(totalcost_ori[building_index - 1][2])
             data = {
                 '': ['Cost ($)',"Cost multiplier"],
-                'Floor': [int(building_information_ori[building_index-1, 19]),float(building_information_ori[building_index-1,19])/total_cost],
-                'Column': [int(building_information_ori[building_index-1, 20]),float(building_information_ori[building_index-1, 20])/total_cost],
-                'Partition': [int(building_information_ori[building_index-1, 21]),float(building_information_ori[building_index-1, 21])/total_cost],
-                'Sprinkler': [int(building_information_ori[building_index-1, 22]),float(building_information_ori[building_index-1, 22])/total_cost],
-                'Fire pump': [int(building_information_ori[building_index-1, 23]),float(building_information_ori[building_index-1, 23])/total_cost],
-                'Alarm': [int(building_information_ori[building_index-1, 24]),float(building_information_ori[building_index-1, 24])/total_cost],
-                'Ceiling': [int(building_information_ori[building_index-1, 25]),float(building_information_ori[building_index-1, 25])/total_cost],
+                'Floor': [int(building_information_ori[building_index-1, 19]),float(building_information_ori[building_index-1,19])/totalcost_orig],
+                'Column': [int(building_information_ori[building_index-1, 20]),float(building_information_ori[building_index-1, 20])/totalcost_orig],
+                'Partition': [int(building_information_ori[building_index-1, 21]),float(building_information_ori[building_index-1, 21])/totalcost_orig],
+                'Sprinkler': [int(building_information_ori[building_index-1, 22]),float(building_information_ori[building_index-1, 22])/totalcost_orig],
+                'Fire pump': [int(building_information_ori[building_index-1, 23]),float(building_information_ori[building_index-1, 23])/totalcost_orig],
+                'Alarm': [int(building_information_ori[building_index-1, 24]),float(building_information_ori[building_index-1, 24])/totalcost_orig],
+                'Ceiling': [int(building_information_ori[building_index-1, 25]),float(building_information_ori[building_index-1, 25])/totalcost_orig],
             }
             construction_cost_df_original = pd.DataFrame(data, index=[0,1])
 
@@ -594,19 +624,56 @@ def show():
             col1, col2 = st.columns(2)
             with col1:
 
+                df_cost={
+                    'Total Construction Cost (thousand $)': int(total_cost*cci_other/1000),
+                    'Total Construction Cost per sq.ft ($)': int(total_cost_sqft*cci_other),
+                    'Total floor area (thousand sq.ft) for fire protection': int(total_floor_area_inp/1000),
+                    'Total floor area (thousand sq.ft) for other components': int(building_information_ori[building_index - 1][1]/1000),
+                    'Total story': int(total_story),
+                }
+
+                df_cost_df = pd.DataFrame(list(df_cost.items()), columns=['Description', 'Value'])
+
                 st.markdown('**Updated cost data with user-defined cost value**')
                 st.dataframe(construction_cost_df_updated, use_container_width=True, hide_index=True)
+
+                st.dataframe(df_cost_df, use_container_width=True, hide_index=True)
+
+
                 st.session_state.construction_cost_df = construction_cost_df_updated  # Attribute API
                 st.pyplot(f1)
             if alter_design:
                 with col2:
+                    df_cost_alt = {
+                        'Total Construction Cost (thousand $)': int(total_cost_alt*cci_other/1000),
+                        'Total Construction Cost per sq.ft (thousand $)': int(total_cost_alt*cci_other/total_floor_area_inp),
+                        'Total floor area (thousand sq.ft)': int(total_floor_area_inp/1000),
+                        'Total floor area (thousand sq.ft) for other components': int(building_information_ori[building_index - 1][1]/1000),
+                        'Total story': int(total_story),
+                    }
+                    df_cost_df_alt = pd.DataFrame(list(df_cost_alt.items()), columns=['Description', 'Value'])
+
                     st.markdown('**Alternative design**')
                     st.dataframe(construction_cost_df_updated_alt,use_container_width=True,hide_index=True)
+                    st.dataframe(df_cost_df_alt, use_container_width=True,hide_index=True)
+
                     st.session_state.construction_cost_df_alt = construction_cost_df_updated_alt  # Attribute API
                     st.pyplot(f2)
 
             st.markdown('**Original cost data**')
             st.dataframe(construction_cost_df_original,use_container_width=True,hide_index=True)
+            df_cost_orig = {
+                'Total Construction Cost (thousand $)': int(totalcost_orig/1000),
+                'Total Construction Cost per sq.ft ($)': int(
+                    totalcost_orig / building_information_ori[building_index - 1][1]),
+                'Total floor area (thousand sq.ft)': int(building_information_ori[building_index - 1][1] / 1000),
+                'Total floor area (thousand sq.ft) for other components': int(
+                    building_information_ori[building_index - 1][1] / 1000),
+                'Total story': int(total_story),
+            }
+            df_cost_orig_df = pd.DataFrame(list(df_cost_orig.items()), columns=['Description', 'Value'])
+            st.dataframe(df_cost_orig_df, use_container_width=True, hide_index=True)
+
             st.session_state.construction_cost_df_original = construction_cost_df_original  # Attribute API
 
             st.pyplot(f3)
@@ -878,6 +945,7 @@ def show():
 
         with st.container():
             st.markdown('**Note: detailed building design and fire design can be found on page "Explore construction cost database"**')
+
 
             st.subheader('Results')
             st.write("---")
