@@ -21,7 +21,6 @@ def show():
     # import the matlab file .mat, database_original.mat is a 1*1 struct with 7 fields, inlcude all the original data from 130 simulaitons
     database_ori = database_ori_mat['database_original']
 
-    print(database_ori)
     # get the detailed original value from rsmeans
     costdetails_ori_mat = database_ori['costdetails']
     costdetails_ori = costdetails_ori_mat[0, 0]
@@ -48,6 +47,8 @@ def show():
     def Modify_database():
 
         st.header("Economic impact of performance-based structural fire design")
+
+
 
         with (st.sidebar):
 
@@ -82,7 +83,6 @@ def show():
                     BI_saved=st.session_state.BI
                 else:
                     BI_saved=1
-            print(option_analysis_type,BI_saved)
 
             # BI = BI_saved
             BI = st.number_input("Input Building index (start from 1)",value=BI_saved, step=1)
@@ -239,11 +239,12 @@ def show():
             beam_fire_labor_tabular = np.asarray(data_frame.iloc[0:5, 26:33])
             # sf material labor hour
             unit_labor_beam=float(beam_fire_labor_tabular[2,6])
-            print(unit_labor_beam)
+            print(beam_fire_labor_tabular)
             unit_material_fireprotection = float(beam_fire_labor_tabular[2, 5])
             unit_labor_fluted_deck=beam_fire_labor_tabular[3,6]
             unit_material_fluted_deck = beam_fire_labor_tabular[3, 5]
             #
+            print(unit_material_fireprotection)
 
             # beam fire cost at different fire rating with given building index
             beam_fire_cost = beam_fire_cost_tabular[Building_type - 1][2:5]
@@ -364,33 +365,62 @@ def show():
                 total_cost_alt = totalcost_ori[building_index - 1][2] + floor_cost + column_cost + column_protection_cost[
                     column_fire_rating_inp_alt - 1] + floor_protection_cost[Beam_fire_rating_inp_alt - 1]
 
-
         with st.container():
-            st.markdown('**Note: detailed building design and fire design can be found on page "Explore construction cost database"**')
+            st.markdown(
+                '**Note: detailed building design and fire design can be found on page "Explore construction cost database"**')
             st.subheader('Results')
-            cci_consider=st.checkbox('Consider city cost index', value=False)
+            cci_consider = st.checkbox('Consider city cost index', value=False)
             if cci_consider:
-                cci_df = pd.read_csv('city_cost_index.csv')
-                state_name = st.selectbox('Select the state', cci_df['STATE'].unique())
+                #cci_df = pd.read_csv('city_cost_index.csv')
+                cci_df = pd.read_csv('city_cost_index_unit_cost_level.csv',encoding='latin-1')
+
+                state_name = st.selectbox('Select the state', cci_df['State'].unique())
                 # Filter cities based on the selected state
-                filtered_cities = cci_df[cci_df['STATE'] == state_name]['City']
+                filtered_cities = cci_df[cci_df['State'] == state_name]['City']
                 # Select city from the filtered list
                 city_name = st.selectbox('Select the city', filtered_cities)
                 # Get the index of the selected city
-                city_index = cci_df[(cci_df['STATE'] == state_name) & (cci_df['City'] == city_name)].index[0]
+                city_index = cci_df[(cci_df['State'] == state_name) & (cci_df['City'] == city_name)].index[0]
 
-                cci_other=cci_df['TOTAL'].iloc[city_index]/100
-                cci_fire_mat=cci_df['MAT_B10'].iloc[city_index]/100
-                cci_fire_ins = cci_df['INST_B10'].iloc[city_index]/100
-                cci_fire_total = cci_df['TOTAL_B10'].iloc[city_index]/100
-                st.markdown(f"City name: {city_name},"
-                            f"CCI for fire protection material: {cci_df['MAT_B10'].iloc[city_index]}%, CCI for fire protection installation: {cci_fire_ins*100}%,"
-                            f"CCI for fire protection: {cci_fire_total*100}%,CCI for other components: {cci_other*100}%,")
+                cci_other = cci_df['TOTAL'].iloc[city_index] / 100
+                cci_fire_mat = cci_df['MAT07'].iloc[city_index] / 100
+                cci_fire_ins = cci_df['INST07'].iloc[city_index] / 100
+                cci_fire_tot = cci_df['TOTAL07'].iloc[city_index] / 100
+
+                cci_rebar_mat = cci_df['MAT0320'].iloc[city_index] / 100
+                cci_rebar_ins = cci_df['INST0320'].iloc[city_index] / 100
+                cci_rebar_tot = cci_df['TOTAL0320'].iloc[city_index] / 100
+
+                # cci_fire_total = cci_df['TOTAL_B10'].iloc[city_index]/100
+                bare_mat=float(beam_fire_labor_tabular[2, 1])
+                bare_labor=float(beam_fire_labor_tabular[2, 2])
+
+                cci_fire_total = cci_fire_mat * bare_mat / (bare_mat+bare_labor) + cci_fire_ins * bare_labor / (bare_mat+bare_labor)
+                # st.markdown(f"City name: {city_name},"
+                #             f"CCI for fire protection material: {cci_df['MAT_B10'].iloc[city_index]}%, CCI for fire protection installation: {cci_fire_ins * 100}%,"
+                #             f"CCI for fire protection: {int(cci_fire_total * 100)}%,CCI for other components: {cci_other * 100}%,")
+                # Creating the DataFrame
+                df_cci = pd.DataFrame({
+                    'City Name': [city_name],
+                    'CCI - Fire Protection Material': [cci_fire_mat],
+                    'CCI - Fire Protection Installation': [cci_fire_ins],
+                    'CCI - Fire Protection Total': [cci_fire_total],
+                    'CCI - Rebar Material': [cci_rebar_mat],
+                    'CCI - Rebar Installation': [cci_rebar_ins],
+                    'CCI - Rebar Total': [cci_rebar_tot],
+                    'CCI - Other Components': [cci_other]
+                })
+
+
+                st.session_state.df_cci = df_cci  # Attribute API
+
+                # Displaying the DataFrame in Streamlit
+                st.dataframe(df_cci, height=100, hide_index=True)
             else:
-                cci_fire_mat=1
-                cci_fire_ins=1
-                cci_other=1
-                cci_fire_total=1
+                cci_fire_mat = 1
+                cci_fire_ins = 1
+                cci_other = 1
+                cci_fire_total = cci_fire_mat * 0.5 / 1.16 + cci_fire_ins * 0.66 / 1.16
 
             st.write("---")
 
@@ -645,13 +675,16 @@ def show():
             if alter_design:
                 with col2:
                     df_cost_alt = {
-                        'Total Construction Cost (thousand $)': int(total_cost_alt*cci_other/1000),
-                        'Total Construction Cost per sq.ft (thousand $)': int(total_cost_alt*cci_other/total_floor_area_inp),
-                        'Total floor area (thousand sq.ft)': int(total_floor_area_inp/1000),
-                        'Total floor area (thousand sq.ft) for other components': int(building_information_ori[building_index - 1][1]/1000),
-                        'Total story': int(total_story),
+                        '': ['With CCI', "Without CCI"],
+                        'Total Construction Cost (thousand $)': [int(total_cost_alt*cci_other/1000),int(total_cost_alt/1000),],
+                        'Total Construction Cost per sq.ft (thousand $)': [int(total_cost_alt*cci_other/total_floor_area_inp),int(total_cost_alt/total_floor_area_inp)],
+                        'Total floor area (thousand sq.ft)': [int(total_floor_area_inp/1000),int(total_floor_area_inp/1000)],
+                        'Total floor area (thousand sq.ft) for other components': [int(building_information_ori[building_index - 1][1]/1000),
+                                                                                   int(building_information_ori[building_index - 1][1]/1000)],
+                        'Total story': [int(total_story),int(total_story)],
                     }
-                    df_cost_df_alt = pd.DataFrame(list(df_cost_alt.items()), columns=['Description', 'Value'])
+                    #df_cost_df_alt = pd.DataFrame(list(df_cost_alt.items()), columns=['Description', 'Value'])
+                    df_cost_df_alt = pd.DataFrame(df_cost, index=[0, 1])
 
                     st.markdown('**Alternative design**')
                     st.dataframe(construction_cost_df_updated_alt,use_container_width=True,hide_index=True)
