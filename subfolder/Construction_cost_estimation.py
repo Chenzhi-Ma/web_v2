@@ -146,7 +146,7 @@ def show():
 
                 col1, col2 = st.columns(2)
                 with col1:
-                    bayload_inp = st.number_input("bay total load (lbf)",value=int(bayload_inp*1000),step=1)/1000
+                    bayload_inp = st.number_input("bay total load (p.s.f)",value=int(bayload_inp*1000),step=1)/1000
                 with col2:
                     total_story = st.number_input("Building storys",value=int(total_story), step=1)
 
@@ -259,10 +259,10 @@ def show():
             fireprotectionbeam_ori = fireprotectionbeam_default[Building_type - 1]
 
 
-            column_cost, column_protection_cost, floor_load_max,column_protection_labor = column_cost_calculation(total_floor_area_inp, total_story, baysize1_inp, baysize2_inp,
+            column_cost, column_protection_cost, floor_load_max,column_protection_labor,column_load = column_cost_calculation(total_floor_area_inp, total_story, baysize1_inp, baysize2_inp,
                                                               bayload_inp,story_height_inp, column_tabular, column_fire_cost_tabular,fire_protection_percentage_column_inp,
                                                                                           unit_material_fireprotection,unit_labor_beam)
-
+            print(column_load)
             if fire_protection_material_column_inp!=1:
                 column_protection_labor=column_protection_labor*0
 
@@ -272,7 +272,9 @@ def show():
             if fire_protection_material_beam_inp!=1:
                 floor_protection_labor=floor_protection_labor*0
 
-            total_cost = totalcost_ori[building_index - 1][2] + floor_cost + column_cost + column_protection_cost[
+            total_floor_area_orig=building_information_ori[building_index - 1][1]
+
+            total_cost = totalcost_ori[building_index - 1][2]*total_floor_area_inp/total_floor_area_orig + floor_cost + column_cost + column_protection_cost[
                 column_fire_rating_inp - 1] + floor_protection_cost[Beam_fire_rating_inp - 1]
             total_cost_sqft = total_cost / total_floor_area_inp
 
@@ -350,7 +352,7 @@ def show():
                 beam_fire_cost_tabular_alt = np.asarray(data_frame.iloc[row_indices_beam, 9:14], float)
                 beam_fire_cost_alt = beam_fire_cost_tabular_alt[Building_type - 1][2:5]
 
-                column_cost_alt, column_protection_cost_alt, floor_load_max_alt, column_protection_labor_alt= column_cost_calculation(total_floor_area_inp, total_story, baysize1_inp, baysize2_inp,
+                column_cost_alt, column_protection_cost_alt, floor_load_max_alt, column_protection_labor_alt,column_load= column_cost_calculation(total_floor_area_inp, total_story, baysize1_inp, baysize2_inp,
                                                                   bayload_inp,story_height_inp, column_tabular, column_fire_cost_tabular_alt,fire_protection_percentage_column_inp_alt
                                                                                                            ,unit_material_fireprotection,unit_labor_beam)
                 if fire_protection_material_column_inp_alt != 1:
@@ -362,7 +364,7 @@ def show():
                 if fire_protection_material_beam_inp_alt != 1:
                     floor_protection_labor_alt = floor_protection_labor_alt * 0
 
-                total_cost_alt = totalcost_ori[building_index - 1][2] + floor_cost + column_cost + column_protection_cost[
+                total_cost_alt = totalcost_ori[building_index - 1][2]*total_floor_area_inp/total_floor_area_orig + floor_cost + column_cost + column_protection_cost[
                     column_fire_rating_inp_alt - 1] + floor_protection_cost[Beam_fire_rating_inp_alt - 1]
 
         with st.container():
@@ -410,17 +412,32 @@ def show():
                     'CCI - Rebar Total': [cci_rebar_tot],
                     'CCI - Other Components': [cci_other]
                 })
-
-
-                st.session_state.df_cci = df_cci  # Attribute API
-
-                # Displaying the DataFrame in Streamlit
                 st.dataframe(df_cci, height=100, hide_index=True)
+                # Displaying the DataFrame in Streamlit
             else:
                 cci_fire_mat = 1
                 cci_fire_ins = 1
                 cci_other = 1
-                cci_fire_total = cci_fire_mat * 0.5 / 1.16 + cci_fire_ins * 0.66 / 1.16
+                cci_fire_total = 1
+                cci_rebar_mat = 1
+                cci_rebar_ins = 1
+                cci_rebar_tot = 1
+                city_name='National Average'
+
+
+                df_cci = pd.DataFrame({
+                    'City Name': [city_name],
+                    'CCI - Fire Protection Material': [cci_fire_mat],
+                    'CCI - Fire Protection Installation': [cci_fire_ins],
+                    'CCI - Fire Protection Total': [cci_fire_total],
+                    'CCI - Rebar Material': [cci_rebar_mat],
+                    'CCI - Rebar Installation': [cci_rebar_ins],
+                    'CCI - Rebar Total': [cci_rebar_tot],
+                    'CCI - Other Components': [cci_other]
+                })
+
+
+            st.session_state.df_cci = df_cci  # Attribute API
 
             st.write("---")
 
@@ -658,8 +675,8 @@ def show():
                     '': ['With CCI', "Without CCI"],
                     'Total Construction Cost (thousand $)': [int(total_cost*cci_other/1000),int(total_cost/1000)],
                     'Total Construction Cost per sq.ft ($)': [int(total_cost_sqft*cci_other),int(total_cost_sqft)],
-                    'Total floor area (thousand sq.ft) for fire protection': [int(total_floor_area_inp/1000),int(total_floor_area_inp/1000)],
-                    'Total floor area (thousand sq.ft) for other components': [int(building_information_ori[building_index - 1][1]/1000),int(building_information_ori[building_index - 1][1]/1000)],
+                    'Total floor area (thousand sq.ft) ': [int(total_floor_area_inp/1000),int(total_floor_area_inp/1000)],
+                    #'Total floor area (thousand sq.ft) for other components': [int(building_information_ori[building_index - 1][1]/1000),int(building_information_ori[building_index - 1][1]/1000)],
                     'Total story': int(total_story),
                 }
 

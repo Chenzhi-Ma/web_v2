@@ -81,13 +81,14 @@ def column_cost_calculation( total_A, total_story, baysize1, baysize2, bay_total
     if max(floor_load[:, 0, i1]) > 1000:
         print(f"Warning: the maximum floor load exceed the column capacity, building index={building_index}")
 
-
-
+    column_load = [None] * total_story
     for i4 in range(total_story - 1, -1, -1):
         closest_index = find_closest_larger_index(column_tabular[:, 0],floor_load[i4][0][i1])
         floor_load[i4][2][i1] = column_tabular[closest_index][0]  # 3 column load
         floor_load[i4][3][i1] = column_tabular[closest_index][4]  # 4 price V.L.F
         floor_load[i4][4][i1] = column_tabular[closest_index][6] - 1 # 5 fire protection index
+
+        column_load[i4]=column_tabular[closest_index][2]
 
         floor_load[i4][5][i1] = column_fire_cost_tabular[int(floor_load[i4][4][i1]), 3]  # 6 fire protection cost 1h
         floor_load[i4][6][i1] = column_fire_cost_tabular[int(floor_load[i4][4][i1]), 4]  # 6 fire protection cost 2h
@@ -120,7 +121,7 @@ def column_cost_calculation( total_A, total_story, baysize1, baysize2, bay_total
     i1 += 1
     column_protection_labor=column_protection_cost/unit_material_fireprotection*unit_labor_beam
 
-    return column_cost, column_protection_cost, floor_load_max, column_protection_labor
+    return column_cost, column_protection_cost, floor_load_max, column_protection_labor,column_load
 
 def floor_system_cost(total_A, floor_composite, beam_fire_cost, fireprotectionbeam_ori,fire_protection_percentage_beam_inp,unit_material_fireprotection,unit_labor_beam):
     # fire protection cost on floor system per sq.ft for different building type

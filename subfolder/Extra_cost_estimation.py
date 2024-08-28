@@ -13,13 +13,14 @@ def show():
 
     building_parameter_original = st.session_state.building_parameter_original
     Affect_area = building_parameter_original['Total area'][0]
-
+    df_cci=st.session_state.df_cci
+    df_cci_rebar_tot=df_cci['CCI - Rebar Total'][0]
+    city_name=df_cci['City Name'][0]
     unit_cost_data = st.session_state.uploaded_file_cost
     welded_wire_table = unit_cost_data.iloc[26:36, 15:19]
     welded_wire_name = welded_wire_table.iloc[1:9,0].tolist()
     welded_wire_labor=np.asarray(welded_wire_table.iloc[1:, 2], float)
-    welded_wire_cost = np.asarray(welded_wire_table.iloc[1:, 3], float)
-    print(welded_wire_labor,111)
+    welded_wire_cost = np.asarray(welded_wire_table.iloc[1:, 3], float)*df_cci_rebar_tot
     with st.sidebar:
         # Set up the part for user input file
         st.markdown("## **User Input Parameter**")
@@ -90,6 +91,8 @@ def show():
 
         st.subheader('Results')
         st.write("---")
+        st.write(f"City Cost Index of reinforcement for {city_name} is {df_cci_rebar_tot}")
+
 
         if alter_design:
             data = {
