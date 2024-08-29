@@ -161,7 +161,7 @@ def show():
                 data_environment = pd.concat([environmental_impact_df['Total(Study year)'], environmental_impact_df_alt['Total(Study year)']], axis=1,
                                              keys=['Total_Reference', 'Total_Alternative'])
 
-                data_environment_sfrm = pd.concat([data_sfrm_co2['Greenhouse gas(CO_2) from SFRM'], data_sfrm_co2_alt['Greenhouse gas(CO_2) from SFRM alt.']], axis=1,
+                data_environment_sfrm = pd.concat([data_sfrm_co2['Greenhouse gas(CO_2) from SFRM (kg)'], data_sfrm_co2_alt['Greenhouse gas(CO_2) from SFRM alt. (kg)']], axis=1,
                                              keys=['SFRM_Reference', 'SFRM_Alternative'])
 
                 st.markdown("### Environment impact for the two designs")

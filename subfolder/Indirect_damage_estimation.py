@@ -46,9 +46,18 @@ def show():
 
     fragility_parameter_original = st.session_state.fragility_parameter_original
 
+    df_cost_df=st.session_state.df_cost_cci
+    Affect_area = df_cost_df['Total floor area (thousand sq.ft)'][0]*1000
+    total_cost = df_cost_df.at[0,'Total Construction Cost (thousand $)']*1000
+
+
     building_parameter_original = st.session_state.building_parameter_original
-    Affect_area = building_parameter_original['Total area'][0]
-    Compartment_num=fragility_parameter_original.at[0, 'Number of compartment']
+    Compartment_area_saved = fragility_parameter_original.at[0, 'Estimated area of the fire compartment']
+    Compartment_num=round(Affect_area/Compartment_area_saved)
+
+
+
+
     Severe_fire_pro=fragility_parameter_original.at[0,'Probability of severe fire']
     study_year = fragility_parameter_original.at[0,'Study year']
     damage_state_cost_value= fragility_parameter_original.at[0, 'Damage cost value']
@@ -169,7 +178,7 @@ def show():
                     'building_value': building_parameter_original['Total area'][0]*110,
                     'Fire_loss': damage_state_cost_value[damage_state - 1],
                     'percentile': percentile,
-                    'repair_cost_ratio': damage_state_cost_value[damage_state - 1] / 12000000
+                    'repair_cost_ratio': damage_state_cost_value[damage_state - 1] / total_cost
                 }
 
                 [impede, recovery_days_occupancy, percent_recovered, recovery_days_functionality, fully_repaired, labs,
@@ -306,10 +315,15 @@ def show():
         if alter_design:
             fragility_num_alt = fragility_parameter_alt.at[0, 'Index of the fragility curves for alt.']
             damage_state_cost_value_alt = fragility_parameter_alt.at[0, 'Damage cost value for alt.']
-
             upper_bound_alt = fragility_num_alt * damage_state_num + 1
             lower_bound_alt = (fragility_num_alt - 1) * damage_state_num + 1
             fragility_prob_alt = np.asarray(fragility_curve.iloc[:, lower_bound_alt:upper_bound_alt])
+
+            df_cost_df_alt = st.session_state.df_cost_cci_alt
+            Affect_area = df_cost_df_alt['Total floor area (thousand sq.ft)'][0] * 1000
+            total_cost_alt = df_cost_df_alt.at[0, 'Total Construction Cost (thousand $)'] * 1000
+
+
             if indirect_damage_method == 'Input own value':
                 indirect_damage_loss_alt = st.number_input("Input indirection damage loss (alt.)",value=indirect_damage_loss_alt_saved)
             if indirect_damage_method == 'Default method':
@@ -349,7 +363,7 @@ def show():
                         'building_value': building_parameter_original['Total area'][0]*110,
                         'Fire_loss': damage_state_cost_value_alt[damage_state_alt - 1],
                         'percentile': percentile,
-                        'repair_cost_ratio': damage_state_cost_value_alt[damage_state_alt - 1] / 12000000
+                        'repair_cost_ratio': damage_state_cost_value_alt[damage_state_alt - 1] / total_cost_alt
                     }
 
                     [impede_alt, recovery_days_occupancy_alt, percent_recovered_alt, recovery_days_functionality_alt, fully_repaired_alt,

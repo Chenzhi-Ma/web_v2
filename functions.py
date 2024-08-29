@@ -75,6 +75,9 @@ def column_cost_calculation( total_A, total_story, baysize1, baysize2, bay_total
     for i2 in range(total_story-1, -1, -1):
         # calculate the floor load at different stories
         floor_load[i2][0][i1] = bayarea * bay_total_load + floor_load[i2 + 1][0][i1]
+        ## setting the minimum columns size to weight 45
+        if floor_load[i2][0][i1]<=190:
+            floor_load[i2][0][i1]=190
         # get the number of columns at each story
         floor_load[i2][1][i1] = (floorarea / (baysize1 * baysize2) + x1 / baysize1 + x2 / baysize2 + 1) * story_height
 
@@ -83,6 +86,7 @@ def column_cost_calculation( total_A, total_story, baysize1, baysize2, bay_total
 
     column_load = [None] * total_story
     for i4 in range(total_story - 1, -1, -1):
+
         closest_index = find_closest_larger_index(column_tabular[:, 0],floor_load[i4][0][i1])
         floor_load[i4][2][i1] = column_tabular[closest_index][0]  # 3 column load
         floor_load[i4][3][i1] = column_tabular[closest_index][4]  # 4 price V.L.F

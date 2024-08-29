@@ -123,7 +123,7 @@ def show():
                     building_parameter_original_saved=st.session_state.building_parameter_original
                     Building_para_modi_saved=building_parameter_original_saved.at[0, 'Modify default building parameter']
                     story_height_inp=building_parameter_original_saved.at[0, 'Story height']
-                    #total_floor_area_inp=building_parameter_original_saved.at[0,  'Total area']
+                    total_floor_area_inp=building_parameter_original_saved.at[0,  'Total area']
                     bayload_inp=building_parameter_original_saved.at[0,    'Bay load']
                     total_story = building_parameter_original_saved.at[0,  'Building stories']
                     baysize1_inp = building_parameter_original_saved.at[0, 'Bay size1']
@@ -239,12 +239,10 @@ def show():
             beam_fire_labor_tabular = np.asarray(data_frame.iloc[0:5, 26:33])
             # sf material labor hour
             unit_labor_beam=float(beam_fire_labor_tabular[2,6])
-            print(beam_fire_labor_tabular)
             unit_material_fireprotection = float(beam_fire_labor_tabular[2, 5])
             unit_labor_fluted_deck=beam_fire_labor_tabular[3,6]
             unit_material_fluted_deck = beam_fire_labor_tabular[3, 5]
             #
-            print(unit_material_fireprotection)
 
             # beam fire cost at different fire rating with given building index
             beam_fire_cost = beam_fire_cost_tabular[Building_type - 1][2:5]
@@ -364,8 +362,8 @@ def show():
                 if fire_protection_material_beam_inp_alt != 1:
                     floor_protection_labor_alt = floor_protection_labor_alt * 0
 
-                total_cost_alt = totalcost_ori[building_index - 1][2]*total_floor_area_inp/total_floor_area_orig + floor_cost + column_cost + column_protection_cost[
-                    column_fire_rating_inp_alt - 1] + floor_protection_cost[Beam_fire_rating_inp_alt - 1]
+                total_cost_alt = totalcost_ori[building_index - 1][2]*total_floor_area_inp/total_floor_area_orig + floor_cost_alt + column_cost_alt + column_protection_cost_alt[
+                    column_fire_rating_inp_alt - 1] + floor_protection_cost_alt[Beam_fire_rating_inp_alt - 1]
 
         with st.container():
             st.markdown(
@@ -675,7 +673,7 @@ def show():
                     '': ['With CCI', "Without CCI"],
                     'Total Construction Cost (thousand $)': [int(total_cost*cci_other/1000),int(total_cost/1000)],
                     'Total Construction Cost per sq.ft ($)': [int(total_cost_sqft*cci_other),int(total_cost_sqft)],
-                    'Total floor area (thousand sq.ft) ': [int(total_floor_area_inp/1000),int(total_floor_area_inp/1000)],
+                    'Total floor area (thousand sq.ft)': [int(total_floor_area_inp/1000),int(total_floor_area_inp/1000)],
                     #'Total floor area (thousand sq.ft) for other components': [int(building_information_ori[building_index - 1][1]/1000),int(building_information_ori[building_index - 1][1]/1000)],
                     'Total story': int(total_story),
                 }
@@ -688,41 +686,36 @@ def show():
                 st.dataframe(df_cost_df, use_container_width=True, hide_index=True)
 
                 st.session_state.construction_cost_df = construction_cost_df_updated  # Attribute API
+                st.session_state.df_cost_cci = df_cost_df  # Attribute API
+
+
                 st.pyplot(f1)
             if alter_design:
                 with col2:
                     df_cost_alt = {
                         '': ['With CCI', "Without CCI"],
                         'Total Construction Cost (thousand $)': [int(total_cost_alt*cci_other/1000),int(total_cost_alt/1000),],
-                        'Total Construction Cost per sq.ft (thousand $)': [int(total_cost_alt*cci_other/total_floor_area_inp),int(total_cost_alt/total_floor_area_inp)],
+                        'Total Construction Cost per sq.ft ($)': [int(total_cost_alt*cci_other/total_floor_area_inp),int(total_cost_alt/total_floor_area_inp)],
                         'Total floor area (thousand sq.ft)': [int(total_floor_area_inp/1000),int(total_floor_area_inp/1000)],
                         'Total floor area (thousand sq.ft) for other components': [int(building_information_ori[building_index - 1][1]/1000),
                                                                                    int(building_information_ori[building_index - 1][1]/1000)],
                         'Total story': [int(total_story),int(total_story)],
                     }
+
                     #df_cost_df_alt = pd.DataFrame(list(df_cost_alt.items()), columns=['Description', 'Value'])
-                    df_cost_df_alt = pd.DataFrame(df_cost, index=[0, 1])
+                    df_cost_df_alt = pd.DataFrame(df_cost_alt, index=[0, 1])
 
                     st.markdown('**Alternative design**')
                     st.dataframe(construction_cost_df_updated_alt,use_container_width=True,hide_index=True)
                     st.dataframe(df_cost_df_alt, use_container_width=True,hide_index=True)
+
+                    st.session_state.df_cost_cci_alt = df_cost_df_alt  # Attribute API
 
                     st.session_state.construction_cost_df_alt = construction_cost_df_updated_alt  # Attribute API
                     st.pyplot(f2)
 
             st.markdown('**Original cost data**')
             st.dataframe(construction_cost_df_original,use_container_width=True,hide_index=True)
-            df_cost_orig = {
-                'Total Construction Cost (thousand $)': int(totalcost_orig/1000),
-                'Total Construction Cost per sq.ft ($)': int(
-                    totalcost_orig / building_information_ori[building_index - 1][1]),
-                'Total floor area (thousand sq.ft)': int(building_information_ori[building_index - 1][1] / 1000),
-                'Total floor area (thousand sq.ft) for other components': int(
-                    building_information_ori[building_index - 1][1] / 1000),
-                'Total story': int(total_story),
-            }
-            #df_cost_orig_df = pd.DataFrame(list(df_cost_orig.items()), columns=['Description', 'Value'])
-            #st.dataframe(df_cost_orig_df, use_container_width=True, hide_index=True)
 
             st.session_state.construction_cost_df_original = construction_cost_df_original  # Attribute API
 

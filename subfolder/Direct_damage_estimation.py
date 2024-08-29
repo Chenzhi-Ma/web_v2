@@ -19,24 +19,29 @@ def show():
         # Set up the part for user input file
         st.markdown("## **User Input Parameter**")
 
-        building_parameter_original= st.session_state.building_parameter_original
-        building_area=building_parameter_original['Total area'][0]
+        #building_parameter_original= st.session_state.building_parameter_original
+        df_cost_df=st.session_state.df_cost_cci
+        building_area=df_cost_df['Total floor area (thousand sq.ft)'][0]*1000
+        sq_ft_cost=df_cost_df['Total Construction Cost per sq.ft ($)'][0]
         Severe_fire_pro_saved = 2.6
-        Compartment_num_saved=math.ceil(building_area/1000)
+        #Compartment_num_saved=math.ceil(building_area/1000)
+        Compartment_area_saved = 600
         study_year_saved = 50
         fragility_num_saved = 1
         muq_saved = 780
-        sigmaq_saved = 120
+        sigmaq_saved = 234
 
         option_analysis_type = st.session_state.option_analysis_type
 
         if st.checkbox("Reset to default parameter (Direct damage)",value=False):
             option_analysis_type = 'Start a new analysis'
-            st.write('**The restored input parameter would not be applied**')
+            st.write('**The restored input parameter would not be applied in this section**')
 
         if 'maintenance_input_original' in st.session_state:
             maintenance_input_original = st.session_state.maintenance_input_original
             study_year_saved = maintenance_input_original.at[0, 'Study year']
+
+        default_intial_construciton_cost_saved = int(19.2 * 1000)
 
         if option_analysis_type == 'Load session variables':
             if 'fragility_parameter_original' in st.session_state:
@@ -46,8 +51,14 @@ def show():
                 muq_saved = fragility_parameter_original.at[0, 'Location parameter of fire load (mu)']
                 sigmaq_saved = fragility_parameter_original.at[0, 'Scale parameter of fire load (sigma)']
                 damage_state_cost_value_saved = fragility_parameter_original.at[0, 'Damage cost value']
+                study_year_saved = fragility_parameter_original.at[0, 'Study year']
+                #default_intial_construciton_cost_saved = fragility_parameter_original.at[0, 'Default initial construction cost']
+                input_list_saved = fragility_parameter_original.at[0, 'Input damage state cost ratio']
+                Compartment_area_saved = fragility_parameter_original.at[0, 'Estimated area of the fire compartment']
+
 
         Severe_fire_pro = st.number_input("Input probability of severe fire per million sq.ft (*1e-9/sq.ft)", value=Severe_fire_pro_saved)
+        Compartment_area=st.number_input("Input the estimated area of the fire compartment (sq.ft)", value=Compartment_area_saved)
         study_year=study_year_saved
         # study_year = st.number_input("Input study year of the building", value=study_year_saved)
 
@@ -78,40 +89,38 @@ def show():
         # Display a text astreamrea for the user to input the array
         st.session_state.fragility_curve=fragility_curve
 
-        construction_cost_df = st.session_state.construction_cost_df
-        default_intial_construciton_cost = st.number_input(
+        #construction_cost_df = st.session_state.construction_cost_df
+
+
+        CI = st.number_input(
             "Input the initial construction cost of the fire compartment, "
-            "default value is the NIST floor system cost excluding the fire protction", value=19.2 * 1000)
-        CI = (construction_cost_df['Floor'][0] + construction_cost_df['Column'][0])/Compartment_num_saved+default_intial_construciton_cost
+            "default value is the sq.ft cost times the compartment area", value=sq_ft_cost*Compartment_area)
+        #CI =sq_ft_cost*Compartment_area
+        #(construction_cost_df['Floor'][0] + construction_cost_df['Column'][0])/Compartment_num_saved+default_intial_construciton_cost
 
         if option_analysis_type == 'Load session variables':
             if 'fragility_parameter_original' in st.session_state:
-                damage_state_cost_value=damage_state_cost_value_saved
-
-                st.write("Stored damage state cost value:", damage_state_cost_value)
+                # damage_state_cost_value=damage_state_cost_value_saved
+                input_list=input_list_saved
+                st.write("Stored damage state cost ratio:", input_list)
+                damage_state_cost_value = np.array(input_list) * CI
             else:
-                damage_state_cost_value = st.text_area("Enter your damage state value (comma-separated):")
-            # Process the input and convert it into a NumPy array
-                if damage_state_cost_value:
-                    try:
-                        input_list = [float(item.strip()) for item in damage_state_cost_value.split(',')]
-                        damage_state_cost_value = np.array(input_list)
-                        st.write("Input damage state cost value:", damage_state_cost_value)
-                    except ValueError:
-                        st.write("Invalid input. Please enter a valid comma-separated list of numbers.")
-                else:
-                    damage_state_cost_value=[0.24*CI, 0.91*CI,1.66*CI,100.00*CI]
-                    st.write("Default damage state cost value:", damage_state_cost_value)
+                st.write(
+                    "**Parameters for alternative design are not stored, please select the check box reset to default parameters and start a new analysis; "
+                    "or the default cost ratio will be applied.**")
+                input_list = [0.24, 0.95, 1.66, 200.00]
+                damage_state_cost_value = np.array(input_list) * CI
+                st.write("Default damage state cost ratio:", input_list)
 
         if option_analysis_type == 'Start a new analysis':
 
-            damage_state_cost_value = st.text_area("Enter your damage state cost ratio with respect to initial construction cost (comma-separated):")
+            data_state_cost_ratio = st.text_area("Enter your damage state cost ratio with respect to initial construction cost (comma-separated):")
         # Process the input and convert it into a NumPy array
-            if damage_state_cost_value:
+            if data_state_cost_ratio:
                 try:
-                    input_list = [float(item.strip()) for item in damage_state_cost_value.split(',')]
+                    input_list = [float(item.strip()) for item in data_state_cost_ratio.split(',')]
                     damage_state_cost_value = np.array(input_list)*CI
-                    st.write("Input damage state cost value:", damage_state_cost_value)
+                    st.write("Input damage state cost ratio:", input_list)
                 except ValueError:
                     st.write("Invalid input. Please enter a valid comma-separated list of numbers.")
             else:
@@ -271,8 +280,6 @@ def show():
 
 
 
-
-
         st.markdown("**parameters for alternative design**")
         #alter_design = st.checkbox('Do you want to get damage cost value for alternative design?')
         if "alter_design" in st.session_state:
@@ -280,62 +287,66 @@ def show():
         else:
             alter_design=[]
         if alter_design:
+
+            df_cost_df_alt = st.session_state.df_cost_cci_alt
+            sq_ft_cost_alt = df_cost_df_alt['Total Construction Cost per sq.ft ($)'][0]
+
             fragility_num_alt_saved = 1
 
-            default_intial_construciton_cost_alt = st.number_input(
-                "Input the initial construction cost of the fire compartment, "
-                "default value is the NIST floor system cost excluding the fire protction for alt.", value=19.2 * 1000)
-            construction_cost_df_alt = st.session_state.construction_cost_df_alt
-            CI_alt = (construction_cost_df_alt['Floor'][0] + construction_cost_df_alt['Column'][
-                0]) / Compartment_num_saved + default_intial_construciton_cost_alt
-
+            #default_intial_construciton_cost_alt_saved=int(19.2*1000)
 
             if option_analysis_type == 'Load session variables':
                 if 'fragility_parameter_alt' in st.session_state:
                     fragility_parameter_alt=st.session_state.fragility_parameter_alt
                     fragility_num_alt_saved = fragility_parameter_alt.at[0, 'Index of the fragility curves for alt.']
-                    damage_state_cost_value_alt_saved = fragility_parameter_alt.at[0, 'Damage cost value for alt.']
-                    damage_state_cost_value_alt = damage_state_cost_value_alt_saved
-                    st.write("Stored damage state cost value for alt.:", np.array(damage_state_cost_value_alt,dtype=int))
+                    #default_intial_construciton_cost_alt_saved = fragility_parameter_alt.at[0, 'Default initial construction cost']
+                    input_list_alt_saved = fragility_parameter_alt.at[0, 'Input damage state cost ratio']
+
+            # default_intial_construciton_cost_alt = st.number_input(
+            #     "Input the initial construction cost of the fire compartment, "
+            #     "default value is the NIST floor system cost excluding the fire protction for alt.", value=default_intial_construciton_cost_alt_saved)
+            construction_cost_df_alt = st.session_state.construction_cost_df_alt
+            # CI_alt = (construction_cost_df_alt['Floor'][0] + construction_cost_df_alt['Column'][
+            #     0]) / Compartment_num_saved + default_intial_construciton_cost_alt
+
+            CI_alt = st.number_input(
+                "Input the initial construction cost of the fire compartment for alt. "
+                "Default value is the sq.ft cost times the compartment area.", value=sq_ft_cost_alt * Compartment_area)
+
+            if option_analysis_type == 'Load session variables':
+                if 'fragility_parameter_alt' in st.session_state:
+                    # damage_state_cost_value=damage_state_cost_value_saved
+                    input_list_alt = input_list_alt_saved
+                    st.write("Stored damage state cost ratio for alt.:", input_list_alt)
+                    damage_state_cost_value_alt = np.array(input_list_alt) * CI_alt
                 else:
-                    damage_state_cost_value_alt = st.text_area("Enter your damage state value (comma-separated) alt.:")
-                    # Process the input and convert it into a NumPy array
-                    if damage_state_cost_value_alt:
-                        try:
-                            input_list = [float(item.strip()) for item in damage_state_cost_value_alt.split(',')]
-                            damage_state_cost_value_alt = np.array(input_list)*CI_alt
-                            st.write("Input damage state cost value for alt.:", np.array(damage_state_cost_value_alt,dtype=int))
-                        except ValueError:
-                            st.write("Invalid input. Please enter a valid comma-separated list of numbers.")
-                    else:
-                        construction_cost_df_alt = st.session_state.construction_cost_df_alt
+                    st.write("Parameters for alternative design are not stored, please select the check box reset to default parameters and start a new analysis; "
+                             "or the default cost ratio will be applied")
+                    input_list_alt = [0.24, 0.95, 1.66, 200.00]
+                    damage_state_cost_value_alt = np.array(input_list_alt) * CI_alt
+                    st.write("Default damage state cost ratio for alt.:", input_list_alt)
 
-                        damage_state_cost_value_alt = [0.24 * CI_alt, 0.91 * CI_alt, 1.66 * CI_alt, 100.00 * CI_alt]
-                        print(damage_state_cost_value_alt)
-                        st.write("Default damage state cost value alt.:", np.array(damage_state_cost_value_alt,dtype=int))
+            if option_analysis_type == 'Start a new analysis':
 
+                data_state_cost_ratio_alt = st.text_area(
+                    "Enter your damage state cost ratio with respect to initial construction cost (comma-separated) for alt.:")
+                # Process the input and convert it into a NumPy array
+                if data_state_cost_ratio_alt:
+                    try:
+                        input_list_alt = [float(item.strip()) for item in data_state_cost_ratio_alt.split(',')]
+                        damage_state_cost_value_alt = np.array(input_list_alt) * CI
+                        st.write("Input damage state cost ratio:", input_list_alt)
+                    except ValueError:
+                        st.write("Invalid input. Please enter a valid comma-separated list of numbers.")
+                else:
+                    input_list_alt = [0.24, 0.95, 1.66, 200.00]
+                    damage_state_cost_value_alt = np.array(input_list_alt) * CI
+                    st.write("Default damage state cost ratio:", input_list_alt)
 
             fragility_num_alt = st.number_input("Input the index of the built-in fragility curves (alt.)", step=1,value=fragility_num_alt_saved, max_value=10,min_value=1)
             upper_bound = (fragility_num_alt) * damage_state_num+1
             lower_bound = (fragility_num_alt - 1) * damage_state_num + 1
             fragility_prob_alt = np.asarray(fragility_curve.iloc[:, lower_bound:upper_bound])
-            # Display a text astreamrea for the user to input the array
-            # damage_state_cost_value_alt = st.text_area("Enter your damage state value (comma-separated) alt.:")
-            # Process the input and convert it into a NumPy array
-            if option_analysis_type == 'Start a new analysis':
-                damage_state_cost_value_alt = st.text_area("Enter your damage state cost ratio with respect to initial construction cost for alt. (comma-separated):")
-                # Process the input and convert it into a NumPy array
-                if damage_state_cost_value_alt:
-                    try:
-                        input_list = [float(item.strip()) for item in damage_state_cost_value_alt.split(',')]
-                        damage_state_cost_value_alt = np.array(input_list)*CI_alt
-                        st.write("Input damage state cost value for alt.:", damage_state_cost_value_alt)
-                    except ValueError:
-                        st.write("Invalid input. Please enter a valid comma-separated list of numbers.")
-                else:
-                    input_list = [0.24, 0.95, 1.66, 200.00]
-                    damage_state_cost_value_alt = np.array(input_list)*CI_alt
-                    st.write("Default damage state cost ratio alt.:", input_list)
 
             vulnerability_data1_alt = np.zeros(size_fragility[0])
             vulnerability_data_alt = np.zeros(size_fragility[0])
@@ -402,9 +413,6 @@ def show():
 
 
 
-
-
-
     with st.container():
         st.subheader('Results')
         st.write("---")
@@ -420,6 +428,7 @@ def show():
             'Severe fire frequency (*1e-9)': [Severe_fire_pro],
 
         }
+        print(Severe_fire_pro,damage_value_average,Injury_value_average,building_area)
         direct_damage_loss = pd.DataFrame(data)
 
         if environment_impact:
@@ -561,6 +570,8 @@ def show():
 
             data = {
                 'Index of the fragility curves for alt.': [fragility_num_alt],
+                #'Default initial construction cost':[default_intial_construciton_cost_alt],
+                'Input damage state cost ratio': [input_list_alt],
                 'Damage cost value for alt.': [damage_state_cost_value_alt],
             }
             fragility_parameter_alt = pd.DataFrame(data)
@@ -568,17 +579,20 @@ def show():
 
         data = {
             'Probability of severe fire': [Severe_fire_pro],
-            'Number of compartment': [Compartment_num_saved],
+            'Estimated area of the fire compartment': [Compartment_area_saved],
             'Study year': [study_year],
             'Method of defining the fragility curves': [fragility_curve_method],
             'Index of the fragility curves': [fragility_num],
             'Damage state number': [damage_state_num],
+            #'Default initial construction cost':[default_intial_construciton_cost],
+            'Input damage state cost ratio': [input_list],
             'Damage cost value': [damage_state_cost_value],
             'Location parameter of fire load (mu)': [muq],
             'Scale parameter of fire load (sigma)': [sigmaq],
         }
         fragility_parameter_original = pd.DataFrame(data)
         st.session_state.fragility_parameter_original = fragility_parameter_original  # Attribute API
+
 
         st.write("---")
 

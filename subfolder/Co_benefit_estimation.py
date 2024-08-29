@@ -13,8 +13,21 @@ def show():
 
     fragility_parameter_original = st.session_state.fragility_parameter_original
     building_parameter_original = st.session_state.building_parameter_original
-    Affect_area = building_parameter_original['Total area'][0]
-    Compartment_num=fragility_parameter_original.at[0, 'Number of compartment']
+
+    df_cost_df=st.session_state.df_cost_cci
+    Affect_area = df_cost_df['Total floor area (thousand sq.ft)'][0]*1000
+
+    Compartment_area_saved = fragility_parameter_original.at[0, 'Estimated area of the fire compartment']
+    Compartment_num=round(Affect_area/Compartment_area_saved)
+
+    df_cci = st.session_state.df_cci
+
+    cci_total = df_cci['CCI - Other Components'][0]
+    cci_fire_protection = df_cci['CCI - Fire Protection Total'][0]
+    print(cci_total, 1234)
+
+
+
     Severe_fire_pro=fragility_parameter_original.at[0,'Probability of severe fire']
     study_year = fragility_parameter_original.at[0,'Study year']
 
@@ -135,9 +148,9 @@ def show():
 
 
 
-            total_sfrm_cost_original = construction_cost_df_updated.at[0, 'Floor']/beam_unit_material_cost*beam_sfrm_unit_volume*\
+            total_sfrm_cost_original = construction_cost_df_updated.at[0, 'Floor']/cci_fire_protection/beam_unit_material_cost*beam_sfrm_unit_volume*\
                                        beam_f_density*0.4536/1000*beam_f_gwp+\
-                                       construction_cost_df_updated.at[0, 'Column']/beam_unit_material_cost*beam_sfrm_unit_volume*\
+                                       construction_cost_df_updated.at[0, 'Column']/cci_fire_protection/beam_unit_material_cost*beam_sfrm_unit_volume*\
                                        column_f_density*0.4536/1000*column_f_gwp
 
             ei_cost = st.session_state.ei_cost
@@ -146,11 +159,12 @@ def show():
             concrete_cost = ei_cost['Average concrete loss per sever fire'][0]
 
 
+
             CPI_inflation_till_now = st.number_input("Input the CPI inflation from 2013 till now(https://www.bls.gov/data/inflation_calculator.htm)", value=1.36)
 
-            content_ei=content_cost/CPI_inflation_till_now*environmental_impact_table[:,0]
-            steel_ei=steel_cost/CPI_inflation_till_now*environmental_impact_table[:,1]
-            concrete_ei=concrete_cost/CPI_inflation_till_now*environmental_impact_table[:,2]
+            content_ei=content_cost/cci_total/CPI_inflation_till_now*environmental_impact_table[:,0]
+            steel_ei=steel_cost/cci_total/CPI_inflation_till_now*environmental_impact_table[:,1]
+            concrete_ei=concrete_cost/cci_total/CPI_inflation_till_now*environmental_impact_table[:,2]
 
             namep1 = pd.DataFrame({
                 'Impact name': [environmental_impact_name]
@@ -210,9 +224,9 @@ def show():
                         column_f_gwp_alt = st.number_input("Input column fire protection global warming (kg CO2 eq) per 1000kg unit material for alt.", value=500)
 
 
-                total_sfrm_cost_alt = construction_cost_df_updated_alt.at[0, 'Floor']/beam_unit_material_cost*beam_sfrm_unit_volume*\
+                total_sfrm_cost_alt = construction_cost_df_updated_alt.at[0, 'Floor']/cci_fire_protection/beam_unit_material_cost*beam_sfrm_unit_volume*\
                                            beam_f_density_alt*0.4536/1000*beam_f_gwp_alt+\
-                                           construction_cost_df_updated_alt.at[0, 'Column']/beam_unit_material_cost*beam_sfrm_unit_volume*\
+                                           construction_cost_df_updated_alt.at[0, 'Column']/cci_fire_protection/beam_unit_material_cost*beam_sfrm_unit_volume*\
                                            column_f_density_alt*0.4536/1000*column_f_gwp_alt
 
                 ei_cost_alt = st.session_state.ei_cost_alt
@@ -223,9 +237,9 @@ def show():
 
 
 
-                content_ei_alt = content_cost_alt / CPI_inflation_till_now * environmental_impact_table[:, 0]
-                steel_ei_alt = steel_cost_alt / CPI_inflation_till_now * environmental_impact_table[:, 1]
-                concrete_ei_alt = concrete_cost_alt / CPI_inflation_till_now * environmental_impact_table[:, 2]
+                content_ei_alt = content_cost_alt /cci_total / CPI_inflation_till_now * environmental_impact_table[:, 0]
+                steel_ei_alt = steel_cost_alt /cci_total/ CPI_inflation_till_now * environmental_impact_table[:, 1]
+                concrete_ei_alt = concrete_cost_alt /cci_total/ CPI_inflation_till_now * environmental_impact_table[:, 2]
 
                 namep1 = pd.DataFrame({
                     'Impact name': [environmental_impact_name]
@@ -302,7 +316,7 @@ def show():
             st.session_state.Cobenefits_value_df = Cobenefits_value_df  # Attribute API
             if environment_impact:
                 data_sfrm_co2 = pd.DataFrame ({
-                    'Greenhouse gas(CO_2) from SFRM': [int(total_sfrm_cost_original)],
+                    'Greenhouse gas(CO_2) from SFRM (kg)': [int(total_sfrm_cost_original)],
                 })
                 st.dataframe(data_sfrm_co2,hide_index=True)
                 st.session_state.co2_sfrm = data_sfrm_co2  # Attribute API
@@ -325,7 +339,7 @@ def show():
                 st.session_state.Cobenefits_value_df_alt = Cobenefits_value_alt_df  # Attribute API
                 if environment_impact:
                     data_sfrm_co2_alt = {
-                        'Greenhouse gas(CO_2) from SFRM alt.': [int(total_sfrm_cost_alt)]
+                        'Greenhouse gas(CO_2) from SFRM alt. (kg)': [int(total_sfrm_cost_alt)]
                     }
                     data_sfrm_co2_alt=pd.DataFrame(data_sfrm_co2_alt)
                     st.dataframe(data_sfrm_co2_alt,hide_index=True)
