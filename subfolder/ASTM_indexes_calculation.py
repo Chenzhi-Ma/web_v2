@@ -212,6 +212,8 @@ def show():
 
         else:
             if Download:
+                # Assuming the session state variables are already set as in your previous code snippet
+
                 result = pd.concat([Cost_summary_ref, astm_index], axis=1)
                 cost_save_tocsv = result.to_csv(index=False)
                # cost_save_tocsv_string_io = StringIO(cost_save_tocsv)
@@ -222,3 +224,42 @@ def show():
                     file_name='user_updated_lcc.csv',
                     mime='text/csv',
                 )
+        Download_intermediate_data = st.checkbox('Do you want to download all the intermediate data')
+        if Download_intermediate_data:
+            if alter_design:
+                dataframes_to_save = {
+                    'construction_cost_df': st.session_state.get('construction_cost_df'),
+                    'construction_cost_df_alt': st.session_state.get('construction_cost_df_alt'),
+                    'df_cost_cci': st.session_state.get('df_cost_cci'),
+                    'df_cost_cci_alt': st.session_state.get('df_cost_cci_alt'),
+                    'direct_damage_loss': st.session_state.get('direct_damage_loss'),
+                    'direct_damage_loss_alt': st.session_state.get('direct_damage_loss_alt'),
+                    'indirect_damage_ref': st.session_state.get('indirect_damage_ref'),
+                    'indirect_damage_alt': st.session_state.get('indirect_damage_alt'),
+                    'Cobenefits_value_df': st.session_state.get('Cobenefits_value_df'),
+                    'Cobenefits_value_df_alt': st.session_state.get('Cobenefits_value_df_alt'),
+                }
+
+                # Combine the data into a single DataFrame (optional, depending on your needs)
+                combined_df = pd.concat(dataframes_to_save.values(), keys=dataframes_to_save.keys())
+
+                # Convert MultiIndex to flat index
+                combined_df.index = combined_df.index.to_flat_index()
+
+                # Concatenate Cost_summary and astm_index DataFrames
+                final_combined_df = pd.concat([combined_df, Cost_summary, astm_index], axis=1)
+
+                # Save the final combined DataFrame to CSV
+                cost_save_tocsv = final_combined_df.to_csv(index=False)
+
+                # Create a download button
+                st.download_button(
+                    label="Download CSV",
+                    data=cost_save_tocsv,
+                    file_name='user_updated_lcc1.csv',
+                    mime='text/csv',
+                )
+                st.write("DataFrame is ready for download."),
+            else:
+                st.write("Only valid when the alternative design is activated."),
+
