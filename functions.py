@@ -1175,6 +1175,8 @@ def calculate_affectedarea_and_days(systems, impeding_factor_medians, repair_cos
     compartments_area = building_model['compartment_area']
     total_area = building_model['total_area_sf']
     Fire_loss = building_model['Fire_loss']
+    sqft_cost = 114 #building_model['sqft_cost']
+
     percentile = building_model['percentile']
     inspection_trigger = 1
     if damage_state == 1:
@@ -1193,13 +1195,12 @@ def calculate_affectedarea_and_days(systems, impeding_factor_medians, repair_cos
 
     # protion_labels = systems['name']
 
-    quantity_components = repair_cost['quantity in every compartment']
 
     unit_component = repair_cost['unit'].copy()
     unit_component[unit_component == 'sqft'] = compartments_area
     unit_component[unit_component == 'each'] = 1
 
-    quantity_components = repair_cost['quantity in every compartment'] * unit_component
+    quantity_components = unit_component*sqft_cost*repair_cost['installation cost proportion']
 
     repair_cost_ds1 = (repair_cost['installation cost DS1'] + repair_cost['demolish cost DS1']) * quantity_components
     repair_cost_ds2 = (repair_cost['installation cost DS2'] + repair_cost['demolish cost DS2']) * quantity_components
@@ -1208,25 +1209,29 @@ def calculate_affectedarea_and_days(systems, impeding_factor_medians, repair_cos
     repair_cost_ds1_percentage = repair_cost_ds1 / np.sum(repair_cost_ds1)
     repair_cost_ds2_percentage = repair_cost_ds2 / np.sum(repair_cost_ds2)
     repair_cost_ds3_percentage = repair_cost_ds3 / np.sum(repair_cost_ds3)
+    num_comp=repair_cost_ds3_percentage.shape[0]
 
 
     if damage_state==4:
-        loss_DS1 = pds1 * Fire_loss
-        loss_DS2 = pds2 * Fire_loss
-        loss_DS34 = (pds3 + pds4) * Fire_loss
-
-    if damage_state==3:
+        # loss_DS1 = pds1 * Fire_loss
+        # loss_DS2 = pds2 * Fire_loss
+        # loss_DS34 = (pds3 + pds4) * Fire_loss
         loss_DS1=0
         loss_DS2=0
         loss_DS34 = Fire_loss
 
+    if damage_state==3:
+        loss_DS1=0
+        loss_DS2=0
+        loss_DS34 = np.sum(repair_cost_ds3)
+
     if damage_state==2:
         loss_DS1 = 0
-        loss_DS2 = Fire_loss
+        loss_DS2 = np.sum(repair_cost_ds2)
         loss_DS34 = 0
 
     if damage_state==1:
-        loss_DS1 = Fire_loss
+        loss_DS1 = np.sum(repair_cost_ds1)
         loss_DS2 = 0
         loss_DS34 = 0
 
@@ -1234,6 +1239,7 @@ def calculate_affectedarea_and_days(systems, impeding_factor_medians, repair_cos
     num_ds2 = int(np.maximum(np.ceil(loss_DS2 / np.sum(repair_cost_ds2)),1))
     num_ds3 = int(np.maximum(np.ceil(loss_DS34 / np.sum(repair_cost_ds3)), 1))
 
+    print(num_ds1,num_ds2,num_ds3)
 
 
     # num_ds2 = int(np.ceil(loss_DS2 / np.sum(repair_cost_ds2)))
@@ -1250,13 +1256,16 @@ def calculate_affectedarea_and_days(systems, impeding_factor_medians, repair_cos
     labor_days_DS2 = loss_DS2 / labor_hour_unit_cost / 8
     labor_days_DS3 = loss_DS34 / labor_hour_unit_cost / 8
 
+    print(labor_days_DS2)
+
     cost_portion_DS1 = repair_cost_ds1_percentage
     cost_portion_DS2 = repair_cost_ds2_percentage
     cost_portion_DS3 = repair_cost_ds3_percentage
 
-    portion_labor_days_DS1 = np.array(np.ceil(cost_portion_DS1 * labor_days_DS1)).reshape(7, 1)
-    portion_labor_days_DS2 = np.array(np.ceil(cost_portion_DS2 * labor_days_DS2)).reshape(7, 1)
-    portion_labor_days_DS3 = np.array(np.ceil(cost_portion_DS3 * labor_days_DS3)).reshape(7, 1)
+    portion_labor_days_DS1 = np.array(np.ceil(cost_portion_DS1 * labor_days_DS1)).reshape(num_comp, 1)
+    portion_labor_days_DS2 = np.array(np.ceil(cost_portion_DS2 * labor_days_DS2)).reshape(num_comp, 1)
+    portion_labor_days_DS3 = np.array(np.ceil(cost_portion_DS3 * labor_days_DS3)).reshape(num_comp, 1)
+
 
     sys_labor_days_DS1 = sum_by_label(portion_labor_days_DS1/num_ds1, component_labels)
     sys_labor_days_DS2 = sum_by_label(portion_labor_days_DS2/num_ds2, component_labels)

@@ -52,8 +52,8 @@ def show():
 
 
     building_parameter_original = st.session_state.building_parameter_original
-    Compartment_area_saved = fragility_parameter_original.at[0, 'Estimated area of the fire compartment']
-    Compartment_num=round(Affect_area/Compartment_area_saved)
+    #Compartment_area_saved = fragility_parameter_original.at[0, 'Estimated area of the fire compartment']
+    #Compartment_num=round(Affect_area/Compartment_area_saved)
 
 
 
@@ -175,11 +175,14 @@ def show():
                     'total_area_sf': building_parameter_original['Total area'][0],  # total square feet of the building
                     'area_per_story_sf': 1000,
                     'compartment_area': 1000,
+                    'sqft_cost':114,
                     'building_value': building_parameter_original['Total area'][0]*110,
                     'Fire_loss': damage_state_cost_value[damage_state - 1],
                     'percentile': percentile,
                     'repair_cost_ratio': damage_state_cost_value[damage_state - 1] / total_cost
                 }
+
+                print(building_model)
 
                 [impede, recovery_days_occupancy, percent_recovered, recovery_days_functionality, fully_repaired, labs,
                  sys_repair_times] = \

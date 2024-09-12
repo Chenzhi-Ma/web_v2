@@ -31,6 +31,9 @@ def show():
         muq_saved = 780
         sigmaq_saved = 234
 
+        constant_mat=0.5
+        ds4_cost_multi=200.00
+
         option_analysis_type = st.session_state.option_analysis_type
 
         if st.checkbox("Reset to default parameter (Direct damage)",value=False):
@@ -108,7 +111,7 @@ def show():
                 st.write(
                     "**Parameters for alternative design are not stored, please select the check box reset to default parameters and start a new analysis; "
                     "or the default cost ratio will be applied.**")
-                input_list = [0.24, 0.95, 1.66, 200.00]
+                input_list = [0.24*0.14+constant_mat, 0.95*0.14+constant_mat, 1.66*0.14+constant_mat, ds4_cost_multi]
                 damage_state_cost_value = np.array(input_list) * CI
                 st.write("Default damage state cost ratio:", input_list)
 
@@ -124,7 +127,7 @@ def show():
                 except ValueError:
                     st.write("Invalid input. Please enter a valid comma-separated list of numbers.")
             else:
-                input_list=[0.24,0.95,1.66,200.00]
+                input_list=[0.24*0.14+constant_mat, 0.95*0.14+constant_mat, 1.66*0.14+constant_mat, ds4_cost_multi]
                 damage_state_cost_value = np.array(input_list) * CI
                 st.write("Default damage state cost ratio:", input_list)
 
@@ -322,7 +325,7 @@ def show():
                 else:
                     st.write("Parameters for alternative design are not stored, please select the check box reset to default parameters and start a new analysis; "
                              "or the default cost ratio will be applied")
-                    input_list_alt = [0.24, 0.95, 1.66, 200.00]
+                    input_list_alt = [0.24*0.14+constant_mat, 0.95*0.14+constant_mat, 1.66*0.14+constant_mat, ds4_cost_multi]
                     damage_state_cost_value_alt = np.array(input_list_alt) * CI_alt
                     st.write("Default damage state cost ratio for alt.:", input_list_alt)
 
@@ -339,7 +342,10 @@ def show():
                     except ValueError:
                         st.write("Invalid input. Please enter a valid comma-separated list of numbers.")
                 else:
-                    input_list_alt = [0.24, 0.95, 1.66, 200.00]
+                    input_list_alt = [0.24*0.14+constant_mat, 0.95*0.14+constant_mat, 1.66*0.14+constant_mat, ds4_cost_multi]
+                    #input_list_alt = [0.24, 0.95, 1.66, 200.00]
+
+                    print(input_list_alt)
                     damage_state_cost_value_alt = np.array(input_list_alt) * CI
                     st.write("Default damage state cost ratio:", input_list_alt)
 
