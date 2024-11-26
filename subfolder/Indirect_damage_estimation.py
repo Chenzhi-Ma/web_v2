@@ -6,6 +6,8 @@ import numpy as np
 import pickle
 from functions import column_cost_calculation, floor_system_cost,fire_service_cost,calculate_fireprotection_cost, calculate_affectedarea_and_days,prepare_labels
 import matplotlib.pyplot as plt
+
+
 def show():
     st.title('Indirect damage estimation')
     indirect_loss_file = 'indirect loss parameters.csv'
@@ -82,6 +84,13 @@ def show():
         option_analysis_type = st.session_state.option_analysis_type
         indirect_damage_loss_saved=0
         indirect_damage_loss_alt_saved = 0
+
+        fragility_parameter_original = st.session_state.fragility_parameter_original
+        Compartment_area = fragility_parameter_original.at[0, 'Estimated area of the fire compartment']
+
+        #df_cost_df_alt = st.session_state.df_cost_cci_alt
+
+
         if st.checkbox("Reset to default parameter (Indirect damage)",value=False):
             option_analysis_type = 'Start a new analysis'
             st.write('**The restored input parameter would not be applied**')
@@ -135,9 +144,9 @@ def show():
 
             closest_index = closest_index-1
             systems = pd.read_csv('systems.csv')
+
             impeding_factor_medians = pd.read_csv('impeding_factors.csv')
             repair_cost = pd.read_csv('repair_cost.csv')
-
 
             qfuel = st.session_state.qfuel
             # selected_qfuel = np.random.choice(qfuel, size=1, replace=False,quantile=percentile/100)
@@ -145,6 +154,8 @@ def show():
 
             affected_days_list = []
             average_closed_area_list = []
+            average_closed_portion_list = []
+
             damage_state_list = []
             impede_list = []
             recovery_days_occupancy_list = []
@@ -170,19 +181,20 @@ def show():
             # Fire_loss = damage_state_cost_value[damage_state]
             # damage_state[0]=4
 
+            df_cost_df = st.session_state.df_cost_cci
+            sqft_cost = df_cost_df['Total Construction Cost per sq.ft ($)'][1]
+
             for damage_state in range(1, 5):
                 building_model = {
                     'total_area_sf': building_parameter_original['Total area'][0],  # total square feet of the building
-                    'area_per_story_sf': 1000,
-                    'compartment_area': 1000,
-                    'sqft_cost':114,
-                    'building_value': building_parameter_original['Total area'][0]*110,
+                    'area_per_story_sf': Compartment_area,
+                    'compartment_area': Compartment_area,
+                    'sqft_cost':sqft_cost,
+                    'building_value': building_parameter_original['Total area'][0]*sqft_cost,
                     'Fire_loss': damage_state_cost_value[damage_state - 1],
                     'percentile': percentile,
                     'repair_cost_ratio': damage_state_cost_value[damage_state - 1] / total_cost
                 }
-
-                print(building_model)
 
                 [impede, recovery_days_occupancy, percent_recovered, recovery_days_functionality, fully_repaired, labs,
                  sys_repair_times] = \
@@ -201,6 +213,7 @@ def show():
                 affected_days_list.append(affected_days)
                 average_closed_area_list.append(average_closed_area)
                 damage_state_list.append(damage_state)
+                average_closed_portion_list.append(total_closed_area / total_duration)
 
                 impede_list.append(impede)
                 recovery_days_occupancy_list.append(recovery_days_occupancy)
@@ -214,8 +227,7 @@ def show():
             affected_days_list = np.array(affected_days_list)
             # day_area_close = average_closed_area_list*affected_days_list
 
-            # # Get the index of the closest value
-
+            print('days, areas',affected_days_list,average_closed_area_list,average_closed_portion_list)
 
             # quantile_data_index = np.where(average_closed_area_list * affected_days_list<=quantile_data)[0][0]
             labs_rep = labs_list[closest_index][::-1]
@@ -276,10 +288,8 @@ def show():
 
             RFi=RecaptureFactors[building_topology-1, 0]
             INCi = proprietorIncome[building_topology - 1, 1]
-
+            print(INCi)
             BCTds = affected_days_list
-            # MODds=Modifier[building_topology-1,:]
-            # LOFds=BCTds*MODds
             LOFds = BCTds
 
             # Relocation expense
@@ -287,28 +297,28 @@ def show():
                 disruption_expense1[:, i - 1] = np.maximum((-fragility_prob_ref[:, i] + fragility_prob_ref[:, i - 1]), 0)*\
                                        DCi*FAi[i-1]*(1.0-PercentOwnerOccupied[building_topology-1]/100)
                 rentloss_expense1[:, i - 1] = np.maximum((-fragility_prob_ref[:, i] + fragility_prob_ref[:, i - 1]), 0) * \
-                                     (DCi+RENTi*RTds[i - 1])*FAi[i-1]*PercentOwnerOccupied[building_topology-1]/100
+                                     (DCi+RENTi*RTds[i - 1]/30)*FAi[i-1]*PercentOwnerOccupied[building_topology-1]/100
                 YLOSi1[:, i - 1] =(1-RFi)*FAi[i-1]*INCi*np.maximum((-fragility_prob_ref[:, i] + fragility_prob_ref[:, i - 1]), 0)*LOFds[i-1]
-                RYi1[:, i - 1] = (1.0-PercentOwnerOccupied[building_topology-1]/100)*FAi[i-1]*RENTi*np.maximum((-fragility_prob_ref[:, i] + fragility_prob_ref[:, i - 1]), 0)*RTds[i - 1]
+                RYi1[:, i - 1] = (1.0-PercentOwnerOccupied[building_topology-1]/100)*FAi[i-1]*RENTi*np.maximum((-fragility_prob_ref[:, i] + fragility_prob_ref[:, i - 1]), 0)*RTds[i - 1]/30
 
             disruption_expense = np.maximum(fragility_prob_ref[:, damage_state_num - 1], 0) \
-                                 * DCi*FAi[i-1]*(1.0-PercentOwnerOccupied[building_topology-1]/100) + disruption_expense1.sum(axis=1)
+                                 * DCi*FAi[damage_state_num-1]*(1.0-PercentOwnerOccupied[building_topology-1]/100) + disruption_expense1.sum(axis=1)
             rentloss_expense = np.maximum(fragility_prob_ref[:, damage_state_num - 1], 0) * \
-                               (DCi+RENTi*RTds[damage_state_num - 1])*FAi[i-1]*PercentOwnerOccupied[building_topology-1]/100 + rentloss_expense1.sum(axis=1)
+                               (DCi+RENTi*RTds[damage_state_num - 1]/30)*FAi[damage_state_num-1]*PercentOwnerOccupied[building_topology-1]/100 + rentloss_expense1.sum(axis=1)
 
 
-            YLOSi=(1-RFi)*FAi[i-1]*INCi*np.maximum(fragility_prob_ref[:, damage_state_num - 1], 0)*LOFds[damage_state_num-1]+YLOSi1.sum(axis=1)
-            RYi=(1.0-PercentOwnerOccupied[building_topology-1]/100)*FAi[i-1]*RENTi*\
-                np.maximum(fragility_prob_ref[:, damage_state_num - 1], 0) * RTds[damage_state_num - 1]+RYi1.sum(axis=1)
+            YLOSi=(1-RFi)*FAi[damage_state_num-1]*INCi*np.maximum(fragility_prob_ref[:, damage_state_num - 1], 0)*LOFds[damage_state_num-1]+YLOSi1.sum(axis=1)
+            RYi=(1.0-PercentOwnerOccupied[building_topology-1]/100)*FAi[damage_state_num-1]*RENTi*\
+                np.maximum(fragility_prob_ref[:, damage_state_num - 1], 0) * RTds[damage_state_num - 1]/30+RYi1.sum(axis=1)
 
-            relocation_loss = np.interp(qfuel, hazard_intensity, disruption_expense+rentloss_expense)
+
+            relocation_loss = np.interp(qfuel, hazard_intensity, disruption_expense)
             income_loss = np.interp(qfuel, hazard_intensity, YLOSi)
-            rent_loss = np.interp(qfuel, hazard_intensity, RYi)
+            rent_loss = np.interp(qfuel, hazard_intensity, RYi+rentloss_expense)
 
             relocation_loss_average = np.average(relocation_loss)
             income_loss_average = np.average(income_loss)
             rent_loss_average = np.average(rent_loss)
-
 
             # alter_design = st.checkbox('Do you want to get indirect damage cost value for alternative design?')
         st.markdown("**Parameters for alternative design**")
@@ -339,6 +349,7 @@ def show():
                 percent_recovered_list_alt = []
                 recovery_days_functionality_list_alt = []
                 fully_repaired_list_alt = []
+                average_closed_portion_list_alt = []
                 labs_list_alt, sys_repair_times_list_alt = [], []
 
                 ds_exceedance_prob_alt = np.zeros(4)
@@ -356,18 +367,21 @@ def show():
 
                 # Fire_loss = damage_state_cost_value[damage_state]
                 # damage_state[0]=4
-
+                df_cost_df_alt = st.session_state.df_cost_cci_alt
+                sqft_cost_alt = df_cost_df_alt['Total Construction Cost per sq.ft ($)'][1]
                 for damage_state_alt in range(1, 5):
                     building_model_alt = {
                         'total_area_sf': building_parameter_original['Total area'][0],
                         # total square feet of the building
-                        'area_per_story_sf': 1000,
-                        'compartment_area': 1000,
+                        'area_per_story_sf': Compartment_area,
+                        'compartment_area': Compartment_area,
+                        'sqft_cost': sqft_cost_alt,
                         'building_value': building_parameter_original['Total area'][0]*110,
                         'Fire_loss': damage_state_cost_value_alt[damage_state_alt - 1],
                         'percentile': percentile,
                         'repair_cost_ratio': damage_state_cost_value_alt[damage_state_alt - 1] / total_cost_alt
                     }
+
 
                     [impede_alt, recovery_days_occupancy_alt, percent_recovered_alt, recovery_days_functionality_alt, fully_repaired_alt,
                      labs_alt, sys_repair_times_alt] = \
@@ -388,6 +402,7 @@ def show():
                     average_closed_area_list_alt.append(average_closed_area_alt)
                     damage_state_list_alt.append(damage_state_alt)
 
+
                     impede_list_alt.append(impede_alt)
                     recovery_days_occupancy_list_alt.append(recovery_days_occupancy_alt)
                     percent_recovered_list_alt.append(percent_recovered_alt)
@@ -396,9 +411,12 @@ def show():
                     labs_list_alt.append(labs_alt)
                     sys_repair_times_list_alt.append(sys_repair_times_alt)
 
+                    average_closed_portion_list_alt.append(total_closed_area_alt / total_duration_alt)
+
                 average_closed_area_list_alt = np.array(average_closed_area_list_alt)
                 affected_days_list_alt = np.array(affected_days_list_alt)
                 # day_area_close = average_closed_area_list*affected_days_list
+                print('days, areas, alt', affected_days_list_alt, average_closed_area_list_alt, average_closed_portion_list)
 
                 # # Get the index of the closest value
 
@@ -458,6 +476,7 @@ def show():
                 DCi = RelocationExpense[building_topology - 1, 1]
                 RENTi = RelocationExpense[building_topology - 1, 0]
                 FAi = average_closed_area_list_alt
+
                 RFi = RecaptureFactors[building_topology - 1, 0]
 
                 INCi = proprietorIncome[building_topology - 1, 1]
@@ -472,38 +491,42 @@ def show():
                     disruption_expense1_alt[:, i - 1] = np.maximum((-fragility_prob_alt[:, i] + fragility_prob_alt[:, i - 1]), 0) * \
                                            DCi * FAi[i-1] * (1.0 - PercentOwnerOccupied[building_topology - 1] / 100)
                     rentloss_expense1_alt[:, i - 1]= np.maximum((-fragility_prob_alt[:, i] + fragility_prob_alt[:, i - 1]), 0) * \
-                                         (DCi + RENTi * RTds[i - 1]) * FAi[i-1] * PercentOwnerOccupied[
+                                         (DCi + RENTi * RTds[i - 1]/30) * FAi[i-1] * PercentOwnerOccupied[
                                              building_topology - 1] / 100
                     YLOSi1_alt[:, i - 1] = (1 - RFi) * FAi[i-1] * INCi * np.maximum(
                         (-fragility_prob_alt[:, i] + fragility_prob_alt[:, i - 1]), 0) * LOFds[i - 1]
                     RYi1_alt[:, i - 1] = (1.0 - PercentOwnerOccupied[building_topology - 1] / 100) * FAi[i-1] * RENTi * np.maximum(
-                        (-fragility_prob_alt[:, i] + fragility_prob_alt[:, i - 1]), 0) * RTds[i - 1]
+                        (-fragility_prob_alt[:, i] + fragility_prob_alt[:, i - 1]), 0) * RTds[i - 1]/30
 
 
                 disruption_expense_alt = np.maximum(fragility_prob_alt[:, damage_state_num - 1], 0) \
-                                     * DCi * FAi[i-1]* (1.0 - PercentOwnerOccupied[building_topology - 1] / 100) + disruption_expense1_alt.sum(axis=1)
+                                     * DCi * FAi[damage_state_num-1]* (1.0 - PercentOwnerOccupied[building_topology - 1] / 100) + disruption_expense1_alt.sum(axis=1)
 
                 rentloss_expense_alt = np.maximum(fragility_prob_alt[:, damage_state_num - 1], 0) * \
-                                   (DCi + RENTi * RTds[damage_state_num - 1]) * FAi[i-1] * PercentOwnerOccupied[building_topology - 1] / 100 + rentloss_expense1_alt.sum(axis=1)
-                YLOSi_alt = (1 - RFi) * FAi[i-1] * INCi * np.maximum(fragility_prob_alt[:, damage_state_num - 1], 0) * LOFds[
+                                   (DCi + RENTi * RTds[damage_state_num - 1]/30) * FAi[damage_state_num-1] * PercentOwnerOccupied[building_topology - 1] / 100 + rentloss_expense1_alt.sum(axis=1)
+                YLOSi_alt = (1 - RFi) * FAi[damage_state_num-1] * INCi * np.maximum(fragility_prob_alt[:, damage_state_num - 1], 0) * LOFds[
                     damage_state_num - 1] + YLOSi1_alt.sum(axis=1)
 
+                RYi_alt = (1.0 - PercentOwnerOccupied[building_topology - 1] / 100) * FAi[damage_state_num-1] * RENTi * \
+                      np.maximum(fragility_prob_alt[:, damage_state_num - 1], 0) * RTds[damage_state_num - 1]/30 + RYi1_alt.sum(axis=1)
 
 
-                RYi_alt = (1.0 - PercentOwnerOccupied[building_topology - 1] / 100) * FAi[i-1] * RENTi * \
-                      np.maximum(fragility_prob_alt[:, damage_state_num - 1], 0) * RTds[damage_state_num - 1] + RYi1_alt.sum(axis=1)
+
+
 
                 qfuel = st.session_state.qfuel
 
-                relocation_loss_alt = np.interp(qfuel, hazard_intensity, disruption_expense_alt + rentloss_expense_alt)
+
+                relocation_loss_alt = np.interp(qfuel, hazard_intensity, disruption_expense_alt)
                 income_loss_alt = np.interp(qfuel, hazard_intensity, YLOSi_alt)
-                rent_loss_alt = np.interp(qfuel, hazard_intensity, RYi_alt)
+                rent_loss_alt = np.interp(qfuel, hazard_intensity, RYi_alt + rentloss_expense_alt)
 
                 relocation_loss_average_alt = np.average(relocation_loss_alt)
                 income_loss_average_alt = np.average(income_loss_alt)
 
                 rent_loss_average_alt = np.average(rent_loss_alt)
 
+                print( qfuel[49],relocation_loss_alt[49],relocation_loss_average_alt,rent_loss_alt[49],rent_loss_average_alt)
 
 
     with st.container():

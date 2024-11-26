@@ -42,7 +42,7 @@ def show():
             Maintenance_cost_df=st.session_state.Maintenance_cost_df   # Attribute API
             CM_ref=Maintenance_cost_df['Maintenance cost']
             Cobenefits_value_df=st.session_state.Cobenefits_value_df    # Attribute API
-            CB_ref=Cobenefits_value_df['Cobenefit']-Cobenefits_value_df['Rent loss']
+            CB_ref=0
 
             pvlcc_ref = CI_ref + DD_ref + ID_ref+CM_ref - CB_ref
 
@@ -56,7 +56,7 @@ def show():
                 maintenance_cost_total_alt=st.session_state.maintenance_cost_total_alt  # Attribute API
                 CM_alt=maintenance_cost_total_alt['Maintenance cost']
                 Cobenefits_value_df_alt=st.session_state.Cobenefits_value_df_alt    # Attribute API
-                CB_alt=Cobenefits_value_df_alt['Cobenefit']-Cobenefits_value_df_alt['Rent loss']
+                CB_alt=Cobenefits_value_df_alt['Reduction in rent loss']
                 extra_cost_df=st.session_state.extra_cost_df    # Attribute API
 
                 Extra_ref =extra_cost_df.at[
@@ -111,7 +111,8 @@ def show():
         f1 = plt.figure(figsize=(8, 8), dpi=300)
         # two subplots are adopted
         plt.subplots_adjust(left=0.1, right=0.9, top=0.9, bottom=0.1, wspace=0.4, hspace=0.4)
-        value_ref=[int(CI_ref),int(CM_ref.iloc[0]),int(DD_ref.iloc[0]),int(ID_ref.iloc[0]),0,int(CB_ref.iloc[0]),int(pvlcc_ref.iloc[0])]
+        print(CB_ref)
+        value_ref=[int(CI_ref),int(CM_ref.iloc[0]),int(DD_ref.iloc[0]),int(ID_ref.iloc[0]),0,int(CB_ref),int(pvlcc_ref.iloc[0])]
 
         x = np.arange(len(value_ref))
 
@@ -125,7 +126,7 @@ def show():
                 "Direct damage": [int(DD_ref.iloc[0]),int(DD_alt.iloc[0])],
                 "Indirect damage": [int(ID_ref.iloc[0]),int(ID_alt.iloc[0])],
                 "Extra_cost": [0, int(Extra_ref)],
-                "Co-benefit": [int(CB_ref.iloc[0]),int(CB_alt.iloc[0])],
+                "Co-benefit": [int(CB_ref),int(CB_alt.iloc[0])],
             }
             Cost_summary = pd.DataFrame(data)
             bar_width=0.35

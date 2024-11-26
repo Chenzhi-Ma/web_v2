@@ -265,11 +265,8 @@ def calculate_fireprotection_cost(thickness,para_fireprotection,perimeter,materi
     T1=thickness
     volume = perimeter * T1 / 12 / 12
     price = para_fireprotection[material_type-1][0] * volume + para_fireprotection[material_type-1][1]  # for sfrm
-    print(membertype)
     if membertype == 4:
         price = para_fireprotection[4][0] * T1 * 12
-        print(price)
-
     return price
 
 # def convert_state_for_json(state):
@@ -414,6 +411,7 @@ def inspection_impedance(num_reals, impeding_factor_medians, impedance_options, 
 
     # Affects all systems that need repair
     # Assume impedance always takes a full day
+
 
     return inspection_imped
 def finance_impedance(num_reals,impeding_factor_medians,impedance_options,repair_classification,repair_cost_ratio,trunc_pd):
@@ -819,7 +817,7 @@ def impedance_days_ordered(num_sys, inspection_imped, financing_imped, permittin
         'complete_day': np.max(complete_day['financing'])
     }
 
-    select_sys = [0, 1, 2]  # Indexes corresponding to 'Structure', 'Exterior', 'HVAC'
+    select_sys = [0, 1, 2]
     for ss in select_sys:
         sys_name = systems.loc[ss, 'name']
         if complete_day['eng_mob'][0, ss]!=0:
@@ -848,7 +846,7 @@ def impedance_days_ordered(num_sys, inspection_imped, financing_imped, permittin
     return time_sys, breakdowns
 
 def allocate_workers_systems(sys_repair_days, sys_crew_size, max_workers_per_building,
-                             sys_idx_priority_matrix, sys_constraint_matrix, condition_tag, sys_impeding_factors):
+                             sys_idx_priority_matrix, sys_constraint_matrix, condition_tag, sys_impeding_factors,max_crews_building_sys):
     """
     Stager repair to each system and allocate workers based on the repair constraints,
     priorities, and repair times of each system.
@@ -885,12 +883,11 @@ def allocate_workers_systems(sys_repair_days, sys_crew_size, max_workers_per_bui
     priority_system_complete_day = np.zeros(num_sys)
     day_vector = np.zeros(0, dtype=int)
     total_workers = np.zeros(0, dtype=int)
-
+    #sys_crew_size=sys_crew_size
     # Re-order system variables based on priority
     priority_sys_workers_matrix = filter_matrix_by_rows(sys_crew_size, sys_idx_priority_matrix)
     priority_sys_constraint_matrix = filter_matrix_by_rows(sys_constraint_matrix, sys_idx_priority_matrix)
     priority_sys_repair_days = filter_matrix_by_rows(sys_repair_days, sys_idx_priority_matrix)
-
 
     if sys_impeding_factors.size == 0:
         priority_sys_impeding_factors = np.zeros(num_sys, dtype=int)
@@ -931,22 +928,22 @@ def allocate_workers_systems(sys_repair_days, sys_crew_size, max_workers_per_bui
             #                                                           is_constraining_sys_incomplete, dtype=bool)
             sys_blocked |= constrained_systems & is_constraining_sys_incomplete
 
-        # print(sys_blocked)
 
         # Need to wait for impeding factors or other repairs to finish
         is_waiting = (current_day < priority_sys_impeding_factors) | sys_blocked
 
         # Define where needs repair
+        priority_sys_repair_days = np.maximum(priority_sys_repair_days, 0)
+        # needs_repair = priority_sys_repair_days
+        # needs_repair[is_waiting] = 0
         needs_repair = (priority_sys_repair_days > 0) & ~is_waiting
+
         # Define required workers
         required_workers = needs_repair * priority_sys_workers_matrix
-
         # Assign workers to each system
         for s in range(num_sys):
             enough_workers = required_workers[s] <= available_workers
-
             assigned_workers[s] = min(required_workers[s], available_workers) if enough_workers else 0
-
             # Define available workers
             in_series = condition_tag & (s == 0)
             available_workers = 0 if in_series and assigned_workers[s] > 0 else available_workers - assigned_workers[s]
@@ -969,6 +966,7 @@ def allocate_workers_systems(sys_repair_days, sys_crew_size, max_workers_per_bui
         priority_sys_repair_days = np.maximum(priority_sys_repair_days - delta_days_in_progress, 0)
 
         # Define start and stop of repair for each sequence
+
         priority_system_complete_day += delta_days * (needs_repair | is_waiting)
 
         # Define cumulative day of repair
@@ -1100,7 +1098,6 @@ def allocate_workers_stories(total_worker_days, required_workers_per_story, aver
     repair_complete_day = np.zeros((1, num_stories))
     repair_start_day = np.full((1,num_stories), np.nan)
     max_workers_per_story = np.zeros((1, num_stories))
-
     # Allocate workers to each story
     iter = 0
     while np.sum(total_worker_days) > 1:
@@ -1131,7 +1128,6 @@ def allocate_workers_stories(total_worker_days, required_workers_per_story, aver
             num_crews_in_building = np.sum(assigned_crews_per_story, axis=1)
             exceeded_max_crews = num_crews_in_building > max_crews_building
             assigned_workers_per_story[exceeded_max_crews, s] = 0
-
             # Define Available Workers
             available_workers_in_building -= assigned_workers_per_story[:, s]
 
@@ -1172,20 +1168,21 @@ def calculate_affectedarea_and_days(systems, impeding_factor_medians, repair_cos
 
     # building_value = 12000000
     num_sys = systems.shape[0]
+
+
+
+
+
     compartments_area = building_model['compartment_area']
     total_area = building_model['total_area_sf']
     Fire_loss = building_model['Fire_loss']
-    sqft_cost = 114 #building_model['sqft_cost']
+    sqft_cost = building_model['sqft_cost']
+    compartment_cost = sqft_cost*compartments_area #building_model['sqft_cost']
 
     percentile = building_model['percentile']
     inspection_trigger = 1
     if damage_state == 1:
         inspection_trigger = 1
-
-    pds1 = ds_prob[0]
-    pds2 = ds_prob[1]
-    pds3 = ds_prob[2]
-    pds4 = ds_prob[3]
 
     repair_cost_ratio = building_model['Fire_loss'] / building_model['building_value']
 
@@ -1200,17 +1197,28 @@ def calculate_affectedarea_and_days(systems, impeding_factor_medians, repair_cos
     unit_component[unit_component == 'sqft'] = compartments_area
     unit_component[unit_component == 'each'] = 1
 
-    quantity_components = unit_component*sqft_cost*repair_cost['installation cost proportion']
+    #quantity_components = unit_component*sqft_cost*repair_cost['installation cost proportion']
 
-    repair_cost_ds1 = (repair_cost['installation cost DS1'] + repair_cost['demolish cost DS1']) * quantity_components
-    repair_cost_ds2 = (repair_cost['installation cost DS2'] + repair_cost['demolish cost DS2']) * quantity_components
-    repair_cost_ds3 = (repair_cost['installation cost DS3'] + repair_cost['demolish cost DS3']) * quantity_components
+    repair_cost_ds1 = (repair_cost['installation cost DS1'] *repair_cost['installation cost proportion']+ repair_cost['demolish cost DS1']) # only labor cost
+    repair_cost_ds2 = (repair_cost['installation cost DS2'] *repair_cost['installation cost proportion']+ repair_cost['demolish cost DS2']) # * quantity_components
+    repair_cost_ds3 = (repair_cost['installation cost DS3'] *repair_cost['installation cost proportion']+ repair_cost['demolish cost DS3']) # * quantity_components
 
-    repair_cost_ds1_percentage = repair_cost_ds1 / np.sum(repair_cost_ds1)
-    repair_cost_ds2_percentage = repair_cost_ds2 / np.sum(repair_cost_ds2)
-    repair_cost_ds3_percentage = repair_cost_ds3 / np.sum(repair_cost_ds3)
-    num_comp=repair_cost_ds3_percentage.shape[0]
+    repair_cost_ds1_all = (repair_cost['installation cost DS1'] + repair_cost['demolish cost DS1']) # only labor cost
+    repair_cost_ds2_all = (repair_cost['installation cost DS2'] + repair_cost['demolish cost DS2']) # * quantity_components
+    repair_cost_ds3_all = (repair_cost['installation cost DS3'] + repair_cost['demolish cost DS3']) # * quantity_components
 
+
+
+    repair_cost_ds1_labor_percentage = repair_cost_ds1 / np.sum(repair_cost_ds1_all)
+    repair_cost_ds2_labor_percentage = repair_cost_ds2 / np.sum(repair_cost_ds2_all)
+    repair_cost_ds3_labor_percentage = repair_cost_ds3 / np.sum(repair_cost_ds3_all)
+    num_comp=repair_cost_ds3_labor_percentage.shape[0]
+
+    #print('installation cost DS3',repair_cost['installation cost DS3'],repair_cost_ds3_percentage, 'num_comp',num_comp)
+
+    num_ds1=0
+    num_ds2=0
+    num_ds3=0
 
     if damage_state==4:
         # loss_DS1 = pds1 * Fire_loss
@@ -1219,31 +1227,25 @@ def calculate_affectedarea_and_days(systems, impeding_factor_medians, repair_cos
         loss_DS1=0
         loss_DS2=0
         loss_DS34 = Fire_loss
+        num_ds3 =int(np.ceil(Fire_loss/(compartment_cost*np.sum(repair_cost_ds3_all))))
 
     if damage_state==3:
         loss_DS1=0
         loss_DS2=0
-        loss_DS34 = np.sum(repair_cost_ds3)
-
+        loss_DS34 = Fire_loss
+        num_ds3=1
     if damage_state==2:
         loss_DS1 = 0
-        loss_DS2 = np.sum(repair_cost_ds2)
+        loss_DS2 = Fire_loss
         loss_DS34 = 0
+        num_ds2=1
 
     if damage_state==1:
-        loss_DS1 = np.sum(repair_cost_ds1)
+        loss_DS1 = Fire_loss
         loss_DS2 = 0
         loss_DS34 = 0
+        num_ds1=1
 
-    num_ds1 = int(np.maximum(np.ceil(loss_DS1 / np.sum(repair_cost_ds1)),1))
-    num_ds2 = int(np.maximum(np.ceil(loss_DS2 / np.sum(repair_cost_ds2)),1))
-    num_ds3 = int(np.maximum(np.ceil(loss_DS34 / np.sum(repair_cost_ds3)), 1))
-
-    print(num_ds1,num_ds2,num_ds3)
-
-
-    # num_ds2 = int(np.ceil(loss_DS2 / np.sum(repair_cost_ds2)))
-    # num_ds3 = int(np.ceil(loss_DS34 / np.sum(repair_cost_ds3)))
 
     mean = repair_cost['labor mean'][0]
     sigma = (repair_cost['labor mean'][0] - repair_cost['labor lower limit'][0]) / 2  # since 3sigma = 20
@@ -1252,19 +1254,18 @@ def calculate_affectedarea_and_days(systems, impeding_factor_medians, repair_cos
     y = stats.norm.pdf(x, mean, sigma)
     labor_hour_unit_cost = np.percentile([x], 100 - percentile, axis=1)
 
-    labor_days_DS1 = loss_DS1 / labor_hour_unit_cost / 8
-    labor_days_DS2 = loss_DS2 / labor_hour_unit_cost / 8
-    labor_days_DS3 = loss_DS34 / labor_hour_unit_cost / 8
+    labor_days_DS1 = loss_DS1*np.sum(repair_cost_ds1_labor_percentage) / labor_hour_unit_cost / 8
+    labor_days_DS2 = loss_DS2*np.sum(repair_cost_ds2_labor_percentage) / labor_hour_unit_cost / 8
+    labor_days_DS3 = loss_DS34*np.sum(repair_cost_ds3_labor_percentage) / labor_hour_unit_cost / 8
 
-    print(labor_days_DS2)
 
-    cost_portion_DS1 = repair_cost_ds1_percentage
-    cost_portion_DS2 = repair_cost_ds2_percentage
-    cost_portion_DS3 = repair_cost_ds3_percentage
-
-    portion_labor_days_DS1 = np.array(np.ceil(cost_portion_DS1 * labor_days_DS1)).reshape(num_comp, 1)
-    portion_labor_days_DS2 = np.array(np.ceil(cost_portion_DS2 * labor_days_DS2)).reshape(num_comp, 1)
-    portion_labor_days_DS3 = np.array(np.ceil(cost_portion_DS3 * labor_days_DS3)).reshape(num_comp, 1)
+    # cost_portion_DS1 = repair_cost_ds1_percentage
+    # cost_portion_DS2 = repair_cost_ds2_percentage
+    # cost_portion_DS3 = repair_cost_ds3_percentage
+    #
+    portion_labor_days_DS1 = np.array(np.ceil(labor_days_DS1*repair_cost_ds1/np.sum(repair_cost_ds1))).reshape(num_comp, 1)
+    portion_labor_days_DS2 = np.array(np.ceil(labor_days_DS2*repair_cost_ds2/np.sum(repair_cost_ds2))).reshape(num_comp, 1)
+    portion_labor_days_DS3 = np.array(np.ceil(labor_days_DS3*repair_cost_ds3/np.sum(repair_cost_ds3))).reshape(num_comp, 1)
 
 
     sys_labor_days_DS1 = sum_by_label(portion_labor_days_DS1/num_ds1, component_labels)
@@ -1286,6 +1287,7 @@ def calculate_affectedarea_and_days(systems, impeding_factor_medians, repair_cos
     df_DS1 = pd.DataFrame(index=systems['name'], columns=['Single Labor Days'])
     df_DS2 = pd.DataFrame(index=systems['name'], columns=['Single Labor Days'])
     df_DS3 = pd.DataFrame(index=systems['name'], columns=['Single Labor Days'])
+
 
     # Assign the values from the result to the DataFrame
     for component_labels, value in sys_labor_days_DS1.items():
@@ -1327,8 +1329,6 @@ def calculate_affectedarea_and_days(systems, impeding_factor_medians, repair_cos
     df_DS2['Single Labor Days'] = df_DS2['Single Labor Days'].apply(convert_and_replace_nan)
     df_DS3['Single Labor Days'] = df_DS3['Single Labor Days'].apply(convert_and_replace_nan)
 
-
-
     df_DS1.replace('', np.nan, inplace=True)
     df_DS1.fillna(0, inplace=True)
 
@@ -1345,9 +1345,11 @@ def calculate_affectedarea_and_days(systems, impeding_factor_medians, repair_cos
     df_DS2['any'] = (df_DS2.iloc[:, 1:4] >= 1).any(axis=1).astype(int)
     df_DS3['any'] = (df_DS3.iloc[:, 1:4] >= 1).any(axis=1).astype(int)
 
+
     df_DS1 = df_DS1.astype(int)
     df_DS2 = df_DS2.astype(int)
     df_DS3 = df_DS3.astype(int)
+
 
     # Combine the arrays
 
@@ -1390,20 +1392,24 @@ def calculate_affectedarea_and_days(systems, impeding_factor_medians, repair_cos
     total_worker_days_orig = total_worker_days.copy()
     sys_priority_matrix = np.array(systems['priority'])
     # sys_constraint_matrix=np.array([0,1,1,1,1,1,1])
-    sys_constraint_matrix = np.ones([len(systems)], dtype=int)
-    sys_constraint_matrix[0] = 0
+    # sys_constraint_matrix = np.ones([len(systems)], dtype=int)
+    # sys_constraint_matrix[0] = 0
 
     if damage_state == 1:
         sys_constraint_matrix = np.zeros([len(systems)], dtype=int)
     # input values:
-    if damage_state == 4:
-        df_repair_classification = df_DS3
     if damage_state == 1:
         df_repair_classification = df_DS1
+        sys_constraint_matrix=np.array(systems['constraintsDS1'])
     if damage_state == 2:
         df_repair_classification = df_DS2
+        sys_constraint_matrix=np.array(systems['constraintsDS2'])
     if damage_state == 3:
         df_repair_classification = df_DS3
+        sys_constraint_matrix=np.array(systems['constraintsDS3'])
+    if damage_state == 4:
+        df_repair_classification = df_DS3
+        sys_constraint_matrix=np.array(systems['constraintsDS4'])
 
     # four systems  structural interior exterior content
     repair_classification = {
@@ -1412,35 +1418,38 @@ def calculate_affectedarea_and_days(systems, impeding_factor_medians, repair_cos
         'full_permit': df_repair_classification['full_permit'].values,
         'redesign': df_repair_classification['redesign'].values
     }
+    #
+    # impedance_options = {
+    #     'include_impedance': {
+    #         'inspection': True,
+    #         'financing': True,
+    #         'permitting': True,
+    #         'engineering': True,
+    #         'contractor': True
+    #     },
+    #     'system_design_time': {
+    #         'f': 0.04,
+    #         'r': 175,
+    #         't': 1.3,
+    #         'w': 8
+    #     },
+    #     'mitigation': {
+    #         'is_essential_facility': False,
+    #         'is_borp_equivalent': False,
+    #         'is_engineer_on_retainer': False,
+    #         'is_contractor_on_retainer': False,
+    #         'funding_source': 'private',
+    #         'capital_available_ratio': 0.1
+    #     },
+    #     'impedance_beta': 0.6,
+    #     'impedance_truncation': 2
+    # }
+    json_path = 'impedance_options.json'
+    with open(json_path, 'r') as file:
+        impedance_options = json.load(file)
 
-    impedance_options = {
-        'include_impedance': {
-            'inspection': True,
-            'financing': True,
-            'permitting': True,
-            'engineering': True,
-            'contractor': True
-        },
-        'system_design_time': {
-            'f': 0.04,
-            'r': 175,
-            't': 1.3,
-            'w': 8
-        },
-        'mitigation': {
-            'is_essential_facility': False,
-            'is_borp_equivalent': False,
-            'is_engineer_on_retainer': False,
-            'is_contractor_on_retainer': False,
-            'funding_source': 'private',
-            'capital_available_ratio': 0.1
-        },
-        'impedance_beta': 0.6,
-        'impedance_truncation': 2
-    }
-
-    mu = 0
-    sigma = 1
+    mu = impedance_options['impedance_mu']
+    sigma = impedance_options['impedance_sigma']
 
     # Loop through the loaded damage data and update the structure
     sys_repair_trigger = repair_classification
@@ -1449,12 +1458,11 @@ def calculate_affectedarea_and_days(systems, impeding_factor_medians, repair_cos
 
     # Initialize or update the dictionary
     repair_time_options = {}
-    # Setting attributes in the dictionary
-    repair_time_options['temp_repair_beta'] = 0.6
-    repair_time_options['max_workers_per_sqft_story'] = 0.001
-    repair_time_options['max_workers_per_sqft_building'] = 0.00025
-    repair_time_options['max_workers_building_min'] = 20
-    repair_time_options['max_workers_building_max'] = 260
+    repair_time_options['temp_repair_beta'] = impedance_options['repair_time_options']['temp_repair_beta']
+    repair_time_options['max_workers_per_sqft_story'] = impedance_options['repair_time_options']['max_workers_per_sqft_story']
+    repair_time_options['max_workers_per_sqft_building'] = impedance_options['repair_time_options']['max_workers_per_sqft_building']
+    repair_time_options['max_workers_building_min'] = impedance_options['repair_time_options']['max_workers_building_min']
+    repair_time_options['max_workers_building_max'] = impedance_options['repair_time_options']['max_workers_building_max']
 
     # Retrieve truncation limits from the impedance_options dictionary
     th_low = -impedance_options['impedance_truncation']
@@ -1488,7 +1496,6 @@ def calculate_affectedarea_and_days(systems, impeding_factor_medians, repair_cos
     [time_sys, breakdowns] = impedance_days_ordered(num_sys, inspection_imped, financing_imped, permitting_imped,
                                                     contractor_mob_imped, eng_mob_imped, eng_design_imped, percentile)
     # Assuming num_reals and num_sys are defined, for example:
-    num_sys = len(systems)  # number of systems
     # Initialize the dictionaries to store start and complete days
 
     # Assuming breakdowns is already properly populated
@@ -1526,9 +1533,7 @@ def calculate_affectedarea_and_days(systems, impeding_factor_medians, repair_cos
         building_model['area_per_story_sf'] * repair_time_options['max_workers_per_sqft_story']
     )
 
-
     num_stories = total_worker_days.shape[0]
-
     # num_stories = 2
     repair_start_days = np.zeros((num_sys, num_stories))
     repair_complete_days = np.zeros((num_sys, num_stories))
@@ -1537,16 +1542,13 @@ def calculate_affectedarea_and_days(systems, impeding_factor_medians, repair_cos
     system_complete_day = np.zeros((num_sys, num_stories))
     sys_start_day = np.zeros((num_sys, num_stories))
 
-    num_du_per_crew = 4
-    max_crews_per_comp_type = 1
-    max_crews_building = max_crews_per_comp_type * 5;
 
-    # average_crew_size = np.array([4.0,4.0])
+    max_crews_building = impedance_options['repair_time_options']['max_crews_building']
     average_crew_size = np.tile(4, num_stories)
     worker_upper_limit = np.minimum(max_workers_per_story, max_workers_per_building)
     max_num_crews_per_story = np.maximum(np.floor(worker_upper_limit / average_crew_size), 1)
     num_crews = max_num_crews_per_story
-
+    max_workers_per_building=np.min([max_workers_per_building, max_workers_per_story*num_stories+1])
     num_workers = average_crew_size * num_crews
 
     repair_complete_day = np.zeros((num_stories))
@@ -1556,10 +1558,12 @@ def calculate_affectedarea_and_days(systems, impeding_factor_medians, repair_cos
 
     required_workers_per_story = np.array(num_workers)
 
+    max_crews_building_sys=np.array(systems['Maximum crews in each building'])
+
     for sys in range(1, num_sys + 1):
         [repair_start_day, repair_complete_day, max_workers_per_story] = allocate_workers_stories(
             total_worker_days[:, sys - 1].reshape(1, num_stories), required_workers_per_story.reshape(1, num_stories),
-            average_crew_size.reshape(1, num_stories), max_crews_building, max_workers_per_building)
+            average_crew_size.reshape(1, num_stories), max_crews_building_sys[sys-1], max_workers_per_building)
 
         # repair_start_days[sys-1,0:2] = np.ceil(np.max(repair_start_day))
         # repair_complete_days[sys-1,0:2] = np.ceil(np.max(repair_complete_day))
@@ -1574,16 +1578,17 @@ def calculate_affectedarea_and_days(systems, impeding_factor_medians, repair_cos
     sys_repair_start_days = np.max(repair_start_days, 1)
     sys_repair_complete_days = np.max(repair_complete_days, 1)
     sys_crew_size = np.max(max_workers_per_storys, 1)
-    sys_idx_priority_matrix = sys_priority_matrix
+    #sys_crew_size = max_crews_building_sys
+    sys_idx_priority_matrix =sys_priority_matrix
+
     condition_tag = red_tag
     sys_impeding_factors = time_sys[0]
     # Call the function
     repair_complete_day_per_system, worker_data = allocate_workers_systems(
         sys_repair_complete_days, sys_crew_size, max_workers_per_building,
-        sys_idx_priority_matrix, sys_constraint_matrix, condition_tag, sys_impeding_factors
+        sys_idx_priority_matrix, sys_constraint_matrix, condition_tag, sys_impeding_factors,max_crews_building_sys
     )
-
-
+    print(damage_state,'worker data',worker_data)
     num_sys = len(systems['id'])
     num_units = num_stories
     story_start_day = np.zeros((num_stories))
@@ -1610,7 +1615,6 @@ def calculate_affectedarea_and_days(systems, impeding_factor_medians, repair_cos
     labs = []
     labels = systems['name']  # This function could be enhanced as described
 
-    print(num_units)
     # Retrieve the field names of the 'impede' dictionary
 
     # Loop through each system
@@ -1642,11 +1646,13 @@ def calculate_affectedarea_and_days(systems, impeding_factor_medians, repair_cos
     # Combine checks to determine when each tenant unit is re-occupiable
     # day_tentant_unit_reoccupiable = np.maximum(day_building_safe, day_tenant_unit_safe)
     day_tentant_unit_reoccupiable = unit_complete_day[0, :]
-    if red_tag == 1:
+    if num_units > 2:
         day_tentant_unit_reoccupiable = np.maximum(day_tentant_unit_reoccupiable,
                                                    np.ceil(impede['permitting_Structure']['complete_day']))
+
         percent_recovered = np.sort(np.hstack((np.arange(num_units), np.arange(1, num_units + 1)))) / num_units
         percent_recovered = 1 - closed_area / total_area + closed_area / total_area * percent_recovered
+
         percent_recovered[0] = 0
         percent_recovered[1] = 0
         percent_recovered[2] = 0

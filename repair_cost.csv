@@ -1,8 +1,8 @@
 functionality,component,unit,installation cost proportion,Demolish cost as ratio of installation,Cost portion in the building,installation cost DS1,installation cost DS2,installation cost DS3,demolish cost DS1,demolish cost DS2,demolish cost DS3,redesign DS1,redesign DS2,redesign DS3,rapid_permit DS1,rapid_permit DS2,rapid_permit DS3,full_permit DS1,full_permit DS2,full_permit DS3,,labor lower limit,labor upper limit,labor mean
-structural,floor,sqft,0.31,0.5,0.175,0.028,0.088,0.175,0.014035088,0.043859649,0.087719298,0,0,1,0,0,1,0,0,1,,70,110,90
+structural,floor,sqft,0.31,0.5,0.175,0.028,0.088,0.175,0.014035088,0.043859649,0.087719298,0,1,1,0,1,1,0,1,1,,70,110,90
 Fire protection,column and beam fire protection,sqft,0.66,0.5,0.01,0.01,0.01,0.01,0.005,0.005,0.005,0,0,1,0,0,1,0,0,0,,,,
-exterior,windowns,sqft,0.3,0.5,0.113,0.113,0.113,0.113,0.056535088,0.056535088,0.056535088,0,0,1,0,0,1,0,0,1,,,,
-exterior,Doors,sqft,0.25,0.5,0.008,0.008,0.008,0.008,0.003815789,0.003815789,0.003815789,0,0,1,0,0,1,0,0,1,,,,
+exterior,windowns,sqft,0.3,0.5,0.113,0.113,0.113,0.113,0.056535088,0.056535088,0.056535088,0,0,1,0,0,1,0,0,0,,,,
+exterior,Doors,sqft,0.25,0.5,0.008,0.008,0.008,0.008,0.003815789,0.003815789,0.003815789,0,0,1,0,0,1,0,0,0,,,,
 exterior,Roof Coverings,sqft,0.25,0.5,0.004,0.004,0.004,0.004,0.001754386,0.001754386,0.001754386,0,0,1,0,0,1,0,0,0,,,,
 interior,Partitions,sqft,0.72,0.5,0.019,0.019,0.019,0.019,0.009517544,0.009517544,0.009517544,0,0,1,0,0,1,0,0,0,,,,
 interior,Interior Doors,sqft,0.25,0.5,0.031,0.031,0.031,0.031,0.015438596,0.015438596,0.015438596,0,0,1,0,0,1,0,0,0,,,,

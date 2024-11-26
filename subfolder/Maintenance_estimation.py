@@ -86,7 +86,7 @@ def show():
 
         #st.write("bar chart, maintenance_cost with respected to year")
         construction_cost_df = st.session_state.construction_cost_df
-        CI = construction_cost_df['Floor'][0] + construction_cost_df['Column'][0]
+        CI = construction_cost_df['Floor'][0] #+ construction_cost_df['Column'][0]
         maintenance_cost_total=CI*maintenance_cost_annually_percentage/discount_rate*(1-np.exp(-discount_rate*study_year))
         data = {
             'Maintenance cost': [int(maintenance_cost_total)],
@@ -105,7 +105,7 @@ def show():
             with col2:
                 st.write("**Results for alternative design**")
                 construction_cost_df_alt = st.session_state.construction_cost_df_alt
-                CI_alt = construction_cost_df_alt['Floor'][0] + construction_cost_df_alt['Column'][0]
+                CI_alt = construction_cost_df_alt['Floor'][0] #+ construction_cost_df_alt['Column'][0]
                 maintenance_cost_total_alt = CI_alt * maintenance_cost_annually_percentage_alt/ discount_rate * (
                             1 - np.exp(-discount_rate * study_year))
                 data = {

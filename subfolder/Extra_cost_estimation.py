@@ -68,6 +68,7 @@ def show():
             if extra_cost_method == 'Input own value':
                 extra_cost = st.number_input("Input estimated extra cost",value=extra_cost_saved)
                 extra_labor = st.number_input("Input estimated extra labor",value=0.0)
+
             if extra_cost_method == 'Welded Wire Mesh':
                 option_rebar_ref = st.selectbox(
                     "Input welded wire mesh for reference design",
@@ -84,7 +85,6 @@ def show():
 
                 extra_cost=Affect_area/100*(welded_wire_cost[selected_index_alt]-welded_wire_cost[selected_index_ref])
                 extra_labor=Affect_area/100*(welded_wire_labor[selected_index_alt]-welded_wire_labor[selected_index_ref])
-
                 # alter_design = st.checkbox('Do you want to get indirect damage cost value for alternative design?')
 
     with st.container():
@@ -95,6 +95,7 @@ def show():
 
 
         if alter_design:
+            extra_labor = 0
             data = {
                 'Extra cost alt.': [int(extra_cost)],
                 'Extra labor alt. (hour)': [int(extra_labor)]

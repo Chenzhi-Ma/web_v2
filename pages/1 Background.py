@@ -473,8 +473,8 @@ with st.expander('Built-in Fragility curves:', expanded=False):
                  use_column_width=True)
 
         st.markdown('''
-        * Curve 5: The same design as NIST test #3 prototype, **with unprotected central beam** and rebar area of **142 mm<sup>2</sup>/m**. 
-        * Curve 6: The same design as NIST test #3 prototype, **with unprotected central beam** and rebar area of **345 mm<sup>2</sup>/m**. 
+        * Curve 5: The same design as NIST test #3 prototype, **with unprotected central beam** and rebar area of **345 mm<sup>2</sup>/m**. 
+        * Curve 6: The same design as NIST test #3 prototype, **with unprotected central beam** and rebar area of **142 mm<sup>2</sup>/m**. 
         ''', unsafe_allow_html=True)
 
         st.image(Fragility_curve_C356,

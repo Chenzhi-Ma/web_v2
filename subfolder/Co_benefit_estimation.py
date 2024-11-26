@@ -54,14 +54,14 @@ def show():
         rent_loss_selection = st.checkbox("Run the rent loss analysis",value=True)
         rent_loss = 0
         rent_loss_alt = 0
-
+        max_worker_SFRM=0.00025/4
         if rent_loss_selection:
             building_parameter_original = st.session_state.building_parameter_original
-            Affect_area = building_parameter_original['Total area'][0]
+            #Affect_area = building_parameter_original['Total area'][0]
 
             if option_analysis_type == 'Start a new analysis':
                 Unit_rent_loss_saved = 3.60
-                number_crew_saved = 2
+                number_crew_saved =int( np.ceil(max_worker_SFRM*Affect_area/4))
                 Cure_time_saved=72
                 per_rented_saved=0.5
             elif option_analysis_type == 'Load session variables':
@@ -77,7 +77,7 @@ def show():
                         0, 'Percentage affected']
                 else:
                     Unit_rent_loss_saved = 3.60
-                    number_crew_saved = 2
+                    number_crew_saved = int( np.ceil(max_worker_SFRM*Affect_area/4))
                     Cure_time_saved=72
                     per_rented_saved=0.5
 
@@ -97,9 +97,8 @@ def show():
 
             total_labor_hour = construction_cost_df['Floor'][2] + construction_cost_df['Column'][2]
 
-            rent_loss = (total_labor_hour / number_crew + Cure_time) * Unit_rent_loss / 24 / 30 * Affect_area*per_rented
+            rent_loss = (total_labor_hour /(number_crew*4*8)+ Cure_time/24) * Unit_rent_loss / 30 * Affect_area*per_rented
 
-            print(total_labor_hour,rent_loss)
 
             # alter_design = st.checkbox('Do you want to get indirect damage cost value for alternative design?')
             #st.markdown("**parameters for alternative design**")
@@ -195,9 +194,10 @@ def show():
             construction_cost_df_alt = st.session_state.construction_cost_df_alt
             extra_cost_df = st.session_state.extra_cost_df
             extra_labor = extra_cost_df['Extra labor alt. (hour)'][0]
-            total_labor_hour_alt = construction_cost_df_alt['Floor'][2] + construction_cost_df_alt['Column'][2]
-            rent_loss_alt = (total_labor_hour_alt / number_crew + Cure_time+extra_labor*2/number_crew_reinf) * Unit_rent_loss / 24 / 30 * Affect_area*per_rented
 
+            total_labor_hour_alt = construction_cost_df_alt['Floor'][2] + construction_cost_df_alt['Column'][2]
+            rent_loss_alt = (total_labor_hour_alt / (number_crew*4*8) + Cure_time/24+(extra_labor*2/number_crew_reinf) )* Unit_rent_loss / 30 * Affect_area*per_rented
+            rent_loss = (total_labor_hour /(number_crew*4*8)+ Cure_time/24) * Unit_rent_loss / 30 * Affect_area*per_rented
 
             Cobenefits_value_alt = 0
             construction_cost_df_updated_alt = st.session_state.construction_cost_df_alt
@@ -288,14 +288,11 @@ def show():
         st.subheader('Results')
         st.write("---")
         data = {
-            'Rent loss': [int(rent_loss)],
-            'Cobenefit': [int(Cobenefits_value)],
+            'Rent loss': [0],
+            'Days needed to apply SFRM': [int(total_labor_hour / number_crew)],
+            #'Cobenefit': [int(Cobenefits_value)],
         }
         Cobenefits_value_df = pd.DataFrame(data)
-
-
-
-
 
         if rent_loss_selection:
             data = {
@@ -312,7 +309,7 @@ def show():
         with col1:
             st.write("**Results for reference design**")
 
-            st.dataframe(Cobenefits_value_df, use_container_width=True, hide_index=True)
+            #st.dataframe(Cobenefits_value_df, use_container_width=True, hide_index=True)
             st.session_state.Cobenefits_value_df = Cobenefits_value_df  # Attribute API
             if environment_impact:
                 data_sfrm_co2 = pd.DataFrame ({
@@ -326,17 +323,21 @@ def show():
 
 
         if alter_design:
+            st.write("**Variation in construction schedule and rent income**")
+
+            data = {
+                    'Rented area': [int(Affect_area*per_rented)],
+                    'Reduction in rent loss': [int(rent_loss)-int(rent_loss_alt)],
+                    'Days needed to apply SFRM for reference design': [int(total_labor_hour / (number_crew*8*4) )],
+                    'Reduction in days needed to apply SFRM': [int(total_labor_hour / (number_crew*8*4) )-int(total_labor_hour_alt / (number_crew*8*4))],
+                    #'Cobenefit': [int(Cobenefits_value_alt)],
+                }
+            Cobenefits_value_alt_df = pd.DataFrame(data)
+            st.dataframe(Cobenefits_value_alt_df, use_container_width=True, hide_index=True)
+            st.session_state.Cobenefits_value_df_alt = Cobenefits_value_alt_df  # Attribute API
+
             with col2:
                 st.write("**Results for alternative design**")
-                data = {
-                    'Rent loss': [int(rent_loss_alt)],
-                    'Cobenefit': [int(Cobenefits_value_alt)],
-
-                }
-                Cobenefits_value_alt_df = pd.DataFrame(data)
-
-                st.dataframe(Cobenefits_value_alt_df, use_container_width=True, hide_index=True)
-                st.session_state.Cobenefits_value_df_alt = Cobenefits_value_alt_df  # Attribute API
                 if environment_impact:
                     data_sfrm_co2_alt = {
                         'Greenhouse gas(CO_2) from SFRM alt. (kg)': [int(total_sfrm_cost_alt)]

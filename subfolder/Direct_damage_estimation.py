@@ -30,7 +30,6 @@ def show():
         fragility_num_saved = 1
         muq_saved = 780
         sigmaq_saved = 234
-
         constant_mat=0.5
         ds4_cost_multi=200.00
 
@@ -111,7 +110,7 @@ def show():
                 st.write(
                     "**Parameters for alternative design are not stored, please select the check box reset to default parameters and start a new analysis; "
                     "or the default cost ratio will be applied.**")
-                input_list = [0.24*0.14+constant_mat, 0.95*0.14+constant_mat, 1.66*0.14+constant_mat, ds4_cost_multi]
+                input_list=[0.042+constant_mat, 0.132+constant_mat, 0.263+constant_mat, ds4_cost_multi]
                 damage_state_cost_value = np.array(input_list) * CI
                 st.write("Default damage state cost ratio:", input_list)
 
@@ -127,7 +126,7 @@ def show():
                 except ValueError:
                     st.write("Invalid input. Please enter a valid comma-separated list of numbers.")
             else:
-                input_list=[0.24*0.14+constant_mat, 0.95*0.14+constant_mat, 1.66*0.14+constant_mat, ds4_cost_multi]
+                input_list=[0.042+constant_mat, 0.132+constant_mat, 0.263+constant_mat, ds4_cost_multi]
                 damage_state_cost_value = np.array(input_list) * CI
                 st.write("Default damage state cost ratio:", input_list)
 
@@ -198,6 +197,8 @@ def show():
 
         ave_casu_fspread2 = np.sum(CASU_SPRD2[:, 0] * CASU_SPRD2[:, 1]) * (1 - 0.9368)
         ave_casu_fspread4 = np.sum(CASU_SPRD4[:, 0] * CASU_SPRD4[:, 1]) * (1 - 0.9368)
+
+        print('casu',ave_casu_fspread2,ave_casu_fspread4,AVE_loss)
 
         Injury_threshold_diy=st.checkbox("Modify the default injury loss calculation threshold?",value=False)
         if Injury_threshold_diy:
@@ -325,7 +326,7 @@ def show():
                 else:
                     st.write("Parameters for alternative design are not stored, please select the check box reset to default parameters and start a new analysis; "
                              "or the default cost ratio will be applied")
-                    input_list_alt = [0.24*0.14+constant_mat, 0.95*0.14+constant_mat, 1.66*0.14+constant_mat, ds4_cost_multi]
+                    input_list_alt = [0.042 + constant_mat, 0.132 + constant_mat, 0.263 + constant_mat, ds4_cost_multi]
                     damage_state_cost_value_alt = np.array(input_list_alt) * CI_alt
                     st.write("Default damage state cost ratio for alt.:", input_list_alt)
 
@@ -342,12 +343,13 @@ def show():
                     except ValueError:
                         st.write("Invalid input. Please enter a valid comma-separated list of numbers.")
                 else:
-                    input_list_alt = [0.24*0.14+constant_mat, 0.95*0.14+constant_mat, 1.66*0.14+constant_mat, ds4_cost_multi]
+                    input_list_alt = [0.042 + constant_mat, 0.132 + constant_mat, 0.263 + constant_mat, ds4_cost_multi]
                     #input_list_alt = [0.24, 0.95, 1.66, 200.00]
 
-                    print(input_list_alt)
                     damage_state_cost_value_alt = np.array(input_list_alt) * CI
                     st.write("Default damage state cost ratio:", input_list_alt)
+
+            print('damage state cost',damage_state_cost_value_alt)
 
             fragility_num_alt = st.number_input("Input the index of the built-in fragility curves (alt.)", step=1,value=fragility_num_alt_saved, max_value=10,min_value=1)
             upper_bound = (fragility_num_alt) * damage_state_num+1
