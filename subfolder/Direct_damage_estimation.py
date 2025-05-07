@@ -249,10 +249,6 @@ def show():
                 'Steel': [0.00, 0.05, 0.12, 0.12],
                 'Concrete': [0.00, 0.05, 0.04, 0.04]
             }
-
-
-
-
             # Create input fields with custom column headers and dynamic default values
             for i in range(rows):
                 cols = st.columns(len(default_material_proportion))
